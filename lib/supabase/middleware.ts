@@ -12,13 +12,22 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options?: any;
+          }[]
+        ) {
+          // Set cookies in request
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
 
+          // Refresh response
           supabaseResponse = NextResponse.next({ request });
 
+          // Set cookies in response
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options);
           });
@@ -27,13 +36,15 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // ✅ CRITICAL FIX: use getSession instead of getUser
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
+  const user = session?.user;
   const pathname = request.nextUrl.pathname;
 
-  // 🔐 Protect ALL admin routes except login
+  // 🔐 Protect all admin routes except login
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -42,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 🔁 If already logged in → skip login page
+  // 🔁 Redirect logged-in user away from login
   if (pathname === "/admin/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
