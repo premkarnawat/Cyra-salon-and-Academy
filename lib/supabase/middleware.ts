@@ -12,14 +12,26 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options?: any;
+          }[]
+        ) {
+          // Set cookies in request
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          // Refresh response
           supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+
+          // Set cookies in response
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -29,7 +41,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect admin routes
+  // 🔐 Protect admin routes
   if (request.nextUrl.pathname.startsWith("/admin/dashboard")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -38,7 +50,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in admin away from login
+  // 🔁 Redirect logged-in admin away from login
   if (request.nextUrl.pathname === "/admin/login") {
     if (user) {
       const url = request.nextUrl.clone();
