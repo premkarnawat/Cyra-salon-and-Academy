@@ -1,0 +1,294 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600;700;800&display=swap');
+
+/* ── CSS Variables ── */
+@layer base {
+  :root {
+    --gold:          #BFA06A;
+    --gold-light:    #D4B483;
+    --gold-dark:     #8C6E30;
+    --gold-pale:     #F2E4C4;
+    --cream-50:      #FDFAF4;
+    --cream-100:     #FAF6EF;
+    --cream-200:     #F5EDE0;
+    --cream-300:     #EDE0C8;
+    --dark-900:      #0C0B09;
+    --dark-800:      #111009;
+    --dark-700:      #181510;
+    --dark-600:      #1C1914;
+    --dark-500:      #22201A;
+    --border-light:  rgba(191,160,106,0.15);
+    --border-dark:   rgba(191,160,106,0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background-color: var(--cream-50);
+    color: #1C1710;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
+  }
+
+  .dark body,
+  .dark {
+    background-color: var(--dark-900);
+    color: #F0E8D8;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--gold);
+    color: #0C0B09;
+  }
+}
+
+/* ── Font Classes ── */
+@layer components {
+  .font-cinzel    { font-family: 'Cinzel Decorative', serif; }
+  .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+  .font-jost      { font-family: 'Jost', sans-serif; }
+
+  /* ── Gold Gradient Text ── */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #8C6E30 0%, #BFA06A 50%, #D4B483 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Glassmorphism ── */
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-light {
+    background: rgba(253, 250, 244, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(191, 160, 106, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(18, 15, 10, 0.72);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(191, 160, 106, 0.2);
+  }
+
+  /* ── Gold Border Glow Card ── */
+  .card-gold-border {
+    position: relative;
+  }
+  .card-gold-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #8C6E30, transparent 40%, #BFA06A 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  .card-gold-border:hover::before { opacity: 1; }
+
+  /* ── Gold Button ── */
+  .btn-gold {
+    background: linear-gradient(135deg, #8C6E30 0%, #BFA06A 50%, #D4B483 100%);
+    color: #0C0B09;
+    font-family: 'Jost', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .btn-gold::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  .btn-gold:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(191, 160, 106, 0.35);
+  }
+  .btn-gold:hover::after { transform: translateX(100%); }
+
+  /* ── Ghost Button ── */
+  .btn-ghost-gold {
+    background: transparent;
+    border: 1px solid rgba(191, 160, 106, 0.5);
+    color: var(--gold);
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn-ghost-gold:hover {
+    background: var(--gold);
+    color: #0C0B09;
+    border-color: var(--gold);
+  }
+
+  /* ── Section Tag ── */
+  .section-tag {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 0.6rem;
+  }
+
+  /* ── Gold Divider ── */
+  .gold-divider {
+    width: 56px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1rem auto;
+  }
+
+  /* ── Swiper overrides ── */
+  .swiper-pagination-bullet {
+    background: var(--gold) !important;
+    opacity: 0.4;
+  }
+  .swiper-pagination-bullet-active {
+    opacity: 1 !important;
+  }
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: var(--gold) !important;
+  }
+
+  /* ── Input styles ── */
+  .input-luxury {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(191, 160, 106, 0.25);
+    border-radius: 12px;
+    padding: 1.1rem 1rem 0.45rem;
+    color: inherit;
+    font-size: 0.95rem;
+    font-family: 'Jost', sans-serif;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    -webkit-appearance: none;
+  }
+  .input-luxury:focus {
+    border-color: var(--gold);
+    background: rgba(191, 160, 106, 0.07);
+    box-shadow: 0 0 0 4px rgba(191, 160, 106, 0.12);
+  }
+
+  /* ── Floating label ── */
+  .float-label {
+    position: absolute;
+    left: 1rem;
+    top: 0.85rem;
+    font-size: 0.88rem;
+    color: rgba(191, 160, 106, 0.6);
+    pointer-events: none;
+    transition: all 0.25s ease;
+    font-family: 'Jost', sans-serif;
+  }
+  .input-luxury:focus ~ .float-label,
+  .input-luxury:not(:placeholder-shown) ~ .float-label {
+    top: 0.3rem;
+    font-size: 0.62rem;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Admin table ── */
+  .admin-table th {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(191,160,106,0.15);
+  }
+  .admin-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(191,160,106,0.07);
+    font-size: 0.9rem;
+  }
+  .admin-table tr:hover td {
+    background: rgba(191,160,106,0.04);
+  }
+
+  /* ── Page transition ── */
+  .page-enter {
+    animation: pageEnter 0.5s ease both;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Noise texture overlay ── */
+  .noise-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* ── Star rating ── */
+  .star-filled { color: var(--gold); }
+  .star-empty  { color: rgba(191,160,106,0.25); }
+
+  /* ── Responsive video ── */
+  .video-responsive {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+  }
+  .video-responsive iframe,
+  .video-responsive video {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+}
