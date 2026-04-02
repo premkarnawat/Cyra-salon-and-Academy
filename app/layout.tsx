@@ -32,20 +32,19 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* All required fonts — Cinzel Decorative for brand, Marcellus for sub-brand, Jost for body */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Jost:wght@200;300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Marcellus&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Jost:wght@200;300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        {/* Theme init script to prevent flash */}
+        {/* Theme init — default LIGHT, only apply dark if explicitly stored */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function(){
                 try {
                   var t = localStorage.getItem('cyra_theme');
-                  var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  var theme = t || p;
-                  if(theme === 'dark') document.documentElement.classList.add('dark');
+                  if(t === 'dark') document.documentElement.classList.add('dark');
                 } catch(e){}
               })();
             `,
@@ -58,15 +57,16 @@ export default function RootLayout({
           position="top-center"
           toastOptions={{
             style: {
-              background: "#1C1914",
-              color: "#F0E8D8",
-              border: "1px solid rgba(191,160,106,0.25)",
+              background: "#FFFFFF",
+              color: "#1C1710",
+              border: "1px solid rgba(191,160,106,0.3)",
               fontFamily: "'Jost', sans-serif",
               fontSize: "14px",
               borderRadius: "12px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
             },
             success: {
-              iconTheme: { primary: "#BFA06A", secondary: "#0C0B09" },
+              iconTheme: { primary: "#BFA06A", secondary: "#FFFFFF" },
             },
           }}
         />
