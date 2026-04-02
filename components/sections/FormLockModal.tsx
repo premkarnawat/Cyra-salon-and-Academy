@@ -1,47 +1,228 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, User, Phone, Calendar, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import { getOrCreateSessionId } from "@/lib/utils";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface FormLockModalProps {
   isOpen: boolean;
   onSuccess: () => void;
 }
 
+// ─── Validation helpers ───────────────────────────────────────────────────────
+function validatePhone(raw: string): boolean {
+  const cleaned = raw.replace(/\D/g, "").replace(/^91/, "");
+  return /^[6-9]\d{9}$/.test(cleaned);
+}
+
+function parseDob(raw: string): string | null {
+  // Accept dd/mm/yyyy or dd-mm-yyyy
+  const match = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (!match) return null;
+  const [, dd, mm, yyyy] = match;
+  const d = parseInt(dd, 10);
+  const m = parseInt(mm, 10);
+  const y = parseInt(yyyy, 10);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  if (y < 1920 || y > new Date().getFullYear()) return null;
+  // Return ISO-ish for storage: yyyy-mm-dd
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// ─── Individual animated field ────────────────────────────────────────────────
+function Field({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  icon: Icon,
+  maxLength,
+  error,
+  inputMode,
+}: {
+  id: string;
+  label: string;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  icon: React.ElementType;
+  maxLength?: number;
+  error?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+}) {
+  const [focused, setFocused] = useState(false);
+  const floated = focused || value.length > 0;
+
+  return (
+    <div className="relative">
+      {/* Input wrapper */}
+      <div
+        className={`
+          relative rounded-2xl overflow-hidden
+          transition-all duration-300
+          ${error
+            ? "shadow-[0_0_0_2px_rgba(239,68,68,0.4)]"
+            : focused
+              ? "shadow-[0_0_0_2px_rgba(191,160,106,0.45)]"
+              : "shadow-[0_0_0_1px_rgba(191,160,106,0.2)]"
+          }
+        `}
+      >
+        {/* Background */}
+        <div
+          className={`
+            absolute inset-0 transition-colors duration-300
+            ${focused
+              ? "bg-white/90"
+              : "bg-white/60"
+            }
+          `}
+          style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        />
+
+        {/* Icon */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+          <Icon
+            size={15}
+            strokeWidth={1.8}
+            className={`transition-colors duration-300 ${focused ? "text-[var(--gold)]" : "text-[var(--gold-dark)]/40"}`}
+          />
+        </div>
+
+        {/* Floating label */}
+        <label
+          htmlFor={id}
+          className={`
+            absolute left-11 z-10 pointer-events-none
+            font-jost transition-all duration-250
+            ${floated
+              ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold"
+              : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/60 tracking-wide"
+            }
+          `}
+        >
+          {label}
+        </label>
+
+        {/* Input */}
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={focused ? placeholder : ""}
+          maxLength={maxLength}
+          inputMode={inputMode}
+          autoComplete="off"
+          className={`
+            relative z-10 w-full bg-transparent outline-none
+            pl-11 pr-4
+            ${floated ? "pt-[22px] pb-[8px]" : "py-[18px]"}
+            text-[14px] font-jost text-[#1C1710]
+            placeholder:text-[#8C7A5E]/35 placeholder:text-[13px]
+            transition-all duration-250
+          `}
+        />
+      </div>
+
+      {/* Error message */}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="mt-1.5 ml-1 text-[11px] text-red-500 font-jost tracking-wide"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Main modal ───────────────────────────────────────────────────────────────
 export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
-  const [name, setName] = useState("");
+  const [name,    setName]    = useState("");
   const [contact, setContact] = useState("");
-  const [dob, setDob] = useState("");
+  const [dob,     setDob]     = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors,  setErrors]  = useState<Record<string, string>>({});
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      // Auto-focus first field after animation
+      setTimeout(() => firstInputRef.current?.focus(), 500);
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
+  // DOB auto-formatting: type digits, slashes auto-inserted dd/mm/yyyy
+  function handleDobChange(raw: string) {
+    // Strip everything except digits
+    const digits = raw.replace(/\D/g, "").slice(0, 8);
+    let formatted = digits;
+    if (digits.length >= 3 && digits.length <= 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    } else if (digits.length >= 5) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    }
+    setDob(formatted);
+    if (errors.dob) setErrors(e => ({ ...e, dob: "" }));
+  }
+
+  function validate(): boolean {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim() || name.trim().length < 2) {
+      newErrors.name = "Please enter your full name";
+    }
+    if (!validatePhone(contact)) {
+      newErrors.contact = "Enter a valid 10-digit mobile number";
+    }
+    const parsed = parseDob(dob);
+    if (!parsed) {
+      newErrors.dob = "Enter date as DD/MM/YYYY";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !contact.trim() || !dob) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
+      const parsed = parseDob(dob)!;
       const res = await fetch("/api/lead-capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
-          contact: contact.trim(),
-          dob,
+          name:       name.trim(),
+          contact:    contact.replace(/\D/g, "").replace(/^91/, ""),
+          dob:        parsed,
           session_id: getOrCreateSessionId(),
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast.success("Welcome to Cyra Salon! 🌟");
+
+      toast.success("Welcome to Cyra Salon! ✨");
       onSuccess();
-    } catch (e: unknown) {
-      toast.error(String(e));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,117 +236,169 @@ export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
+          transition={{ duration: 0.4 }}
+          // No onClick on backdrop — cannot dismiss
         >
-          {/* Backdrop */}
+          {/* ── Backdrop: blurred site content ── */}
           <motion.div
             className="absolute inset-0"
-            style={{
-              background: "rgba(12,11,9,0.78)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            style={{
+              background: "rgba(250,246,239,0.65)",
+              backdropFilter: "blur(18px) saturate(1.4)",
+              WebkitBackdropFilter: "blur(18px) saturate(1.4)",
+            }}
           />
 
-          {/* Card */}
+          {/* ── Decorative gold orbs (light theme atmosphere) ── */}
+          <div
+            className="absolute top-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, rgba(191,160,106,0.12) 0%, transparent 70%)",
+              filter: "blur(40px)",
+            }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, rgba(191,160,106,0.1) 0%, transparent 70%)",
+              filter: "blur(40px)",
+            }}
+            aria-hidden="true"
+          />
+
+          {/* ── Card ── */}
           <motion.div
-            className="relative z-10 w-full max-w-md"
-            initial={{ scale: 0.88, opacity: 0, y: 32 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.92, opacity: 0, y: 16 }}
-            transition={{ duration: 0.45, ease: [0.175, 0.885, 0.32, 1.275] }}
+            className="relative z-10 w-full max-w-[420px]"
+            initial={{ scale: 0.86, opacity: 0, y: 36 }}
+            animate={{ scale: 1,    opacity: 1, y: 0 }}
+            exit={{    scale: 0.93, opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
           >
-            <div className="glass-dark rounded-3xl p-8 md:p-10 shadow-[0_40px_100px_rgba(0,0,0,0.7)]">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.15)] border border-[rgba(191,160,106,0.25)] mb-4">
-                  <Lock size={20} className="text-[var(--gold-light)]" />
-                </div>
-                <h2 className="font-cinzel text-2xl md:text-3xl text-[#D4B483] tracking-wider mb-1">
-                  CYRA
-                </h2>
-                <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto my-3" />
-                <p className="font-jost text-xs tracking-[0.25em] text-[rgba(212,180,131,0.5)] uppercase mb-2">
-                  Salon &amp; Academy
-                </p>
-                <p className="text-[rgba(240,232,216,0.55)] text-sm font-light mt-3">
-                  Please share a few details to continue
-                </p>
-              </div>
+            {/* Glass card */}
+            <div
+              className="rounded-[28px] overflow-hidden shadow-[0_32px_80px_rgba(140,110,48,0.18),0_8px_32px_rgba(0,0,0,0.08)]"
+              style={{
+                background: "rgba(255,255,255,0.82)",
+                backdropFilter: "blur(32px) saturate(1.6)",
+                WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+                border: "1px solid rgba(191,160,106,0.25)",
+              }}
+            >
+              {/* Gold top accent bar */}
+              <div className="h-[3px] w-full bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Name */}
-                <div className="relative">
-                  <input
-                    id="fl-name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder=" "
-                    required
-                    className="input-luxury text-[#F0E8D8]"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "#F0E8D8" }}
-                  />
-                  <label htmlFor="fl-name" className="float-label">Your Name</label>
+              <div className="px-7 sm:px-9 pt-8 pb-9">
+
+                {/* ── Header ── */}
+                <div className="text-center mb-8">
+                  {/* Lock icon */}
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.22)] mb-5">
+                    <ShieldCheck size={22} strokeWidth={1.6} className="text-[var(--gold-dark)]" />
+                  </div>
+
+                  {/* Brand */}
+                  <div className="font-cinzel text-[1.55rem] tracking-[0.22em] leading-none text-[var(--gold-dark)] mb-[5px]">
+                    CYRA
+                  </div>
+                  <div className="font-marcellus text-[0.58rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mb-4">
+                    Salon &amp; Academy
+                  </div>
+
+                  {/* Divider */}
+                  <div className="w-12 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-4" />
+
+                  {/* Message */}
+                  <p className="font-cormorant text-[1.15rem] text-[#3D3527] leading-snug mb-1">
+                    Welcome! Please introduce yourself
+                  </p>
+                  <p className="font-jost text-[12px] text-[#8C7A5E]/70 tracking-wide">
+                    Takes just 10 seconds · One-time per visit
+                  </p>
                 </div>
 
-                {/* Contact */}
-                <div className="relative">
-                  <input
+                {/* ── Form ── */}
+                <form onSubmit={handleSubmit} noValidate className="space-y-4">
+
+                  {/* Name */}
+                  <div ref={firstInputRef as React.Ref<HTMLDivElement>}>
+                    <Field
+                      id="fl-name"
+                      label="Your Full Name"
+                      type="text"
+                      value={name}
+                      onChange={v => { setName(v); if (errors.name) setErrors(e => ({ ...e, name: "" })); }}
+                      placeholder="e.g. Priya Sharma"
+                      icon={User}
+                      error={errors.name}
+                    />
+                  </div>
+
+                  {/* Contact */}
+                  <Field
                     id="fl-contact"
+                    label="Mobile Number"
                     type="tel"
                     value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder=" "
-                    required
+                    onChange={v => { setContact(v); if (errors.contact) setErrors(e => ({ ...e, contact: "" })); }}
+                    placeholder="10-digit mobile number"
+                    icon={Phone}
                     maxLength={10}
-                    className="input-luxury text-[#F0E8D8]"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "#F0E8D8" }}
+                    inputMode="numeric"
+                    error={errors.contact}
                   />
-                  <label htmlFor="fl-contact" className="float-label">Contact Number</label>
-                </div>
 
-                {/* DOB */}
-                <div className="relative">
-                  <input
+                  {/* DOB — dd/mm/yyyy with auto-formatting */}
+                  <Field
                     id="fl-dob"
-                    type="date"
+                    label="Date of Birth"
+                    type="text"
                     value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    required
-                    max={new Date().toISOString().split("T")[0]}
-                    className="input-luxury text-[#F0E8D8]"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "#F0E8D8", paddingTop: "1.1rem" }}
+                    onChange={handleDobChange}
+                    placeholder="DD/MM/YYYY"
+                    icon={Calendar}
+                    maxLength={10}
+                    inputMode="numeric"
+                    error={errors.dob}
                   />
-                  <label
-                    htmlFor="fl-dob"
-                    className="float-label"
-                    style={{ top: "0.3rem", fontSize: "0.62rem", color: "var(--gold)", letterSpacing: "0.12em", textTransform: "uppercase" }}
+
+                  {/* Submit CTA */}
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={loading ? {} : { scale: 1.02, y: -2 }}
+                    whileTap={loading ? {} : { scale: 0.98 }}
+                    className="
+                      btn-gold w-full mt-2
+                      py-[15px] rounded-2xl
+                      text-[11.5px] tracking-[0.26em]
+                      flex items-center justify-center gap-2.5
+                      shadow-[0_8px_28px_rgba(191,160,106,0.35)]
+                      hover:shadow-[0_12px_36px_rgba(191,160,106,0.45)]
+                      disabled:opacity-60 disabled:cursor-not-allowed
+                      transition-shadow duration-300
+                    "
                   >
-                    Date of Birth
-                  </label>
+                    {loading
+                      ? <><Loader2 size={15} className="animate-spin" /> Please wait…</>
+                      : <>Proceed Ahead &nbsp;→</>
+                    }
+                  </motion.button>
+                </form>
+
+                {/* ── Footer note ── */}
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[rgba(191,160,106,0.2)]" />
+                  <p className="text-[10.5px] font-jost text-[#8C7A5E]/50 tracking-wide px-3 text-center">
+                    🔒 Private &amp; secure · Not shared with anyone
+                  </p>
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[rgba(191,160,106,0.2)]" />
                 </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-gold w-full py-4 rounded-xl text-xs tracking-[0.25em] flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <><Loader2 size={16} className="animate-spin" /> Please wait…</>
-                  ) : (
-                    "Proceed Ahead →"
-                  )}
-                </button>
-              </form>
-
-              <p className="text-center text-[10px] text-[rgba(255,255,255,0.2)] mt-5 tracking-wide">
-                🔒 Your information is private and secure
-              </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>
