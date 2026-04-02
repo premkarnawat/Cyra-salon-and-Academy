@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { OpeningScreen } from "@/components/animations/OpeningScreen";
-import { AnnouncementStrip } from "@/components/sections/AnnouncementStrip";
 import { Navbar } from "@/components/sections/Navbar";
 import { HeroBanner } from "@/components/sections/HeroBanner";
 import { OffersSection } from "@/components/sections/OffersSection";
@@ -76,7 +75,6 @@ export default function HomePage() {
 
       {/* Site */}
       <div className={`transition-opacity duration-700 ${showOpening ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-        <AnnouncementStrip />
         <Navbar config={config} onExploreOffers={triggerByClick} />
 
         <main>
