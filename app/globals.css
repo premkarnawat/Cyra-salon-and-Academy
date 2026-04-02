@@ -197,7 +197,7 @@
     color: var(--gold) !important;
   }
 
-  /* ── Input styles ── */
+  /* ── Input styles (admin / dark contexts) ── */
   .input-luxury {
     width: 100%;
     background: rgba(255,255,255,0.06);
@@ -235,6 +235,25 @@
     color: var(--gold);
     letter-spacing: 0.12em;
     text-transform: uppercase;
+  }
+
+  /* ── Form lock modal: light-mode body scroll lock ── */
+  body.form-locked {
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  /* ── Date/number input resets (light theme) ── */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.4;
+    cursor: pointer;
+    filter: invert(60%) sepia(40%) saturate(500%) hue-rotate(5deg);
+  }
+  input[type="date"],
+  input[type="tel"],
+  input[type="text"] {
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   /* ── Admin table ── */
