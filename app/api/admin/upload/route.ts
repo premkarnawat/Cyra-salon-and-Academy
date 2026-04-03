@@ -1,38 +1,39 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/authHelper";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const formData = await req.formData();
-  const file = formData.get("file") as File;
-  const bucket = (formData.get("bucket") as string) || "media";
-  const folder = (formData.get("folder") as string) || "";
+  const file     = formData.get("file") as File | null;
+  const bucket   = (formData.get("bucket") as string) || "media";
+  const folder   = (formData.get("folder") as string) || "";
 
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  const allowed = ["jpg", "jpeg", "png", "webp", "gif", "mp4", "mov", "pdf"];
-  if (!ext || !allowed.includes(ext)) {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!["jpg","jpeg","png","webp","gif","mp4","mov","pdf"].includes(ext)) {
     return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
   }
 
-  const fileName = `${folder ? folder + "/" : ""}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
+  const safe     = folder.trim().replace(/^\/+|\/+$/g,"");
+  const fileName = `${safe ? safe+"/" : ""}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from(bucket)
-    .upload(fileName, buffer, {
-      contentType: file.type,
-      upsert: false,
-    });
+  // Use service role to bypass storage RLS
+  const sb = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const { error: upErr } = await sb.storage.from(bucket).upload(fileName, buf, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
-  const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
+  const { data: { publicUrl } } = sb.storage.from(bucket).getPublicUrl(fileName);
   return NextResponse.json({ url: publicUrl, path: fileName });
 }
