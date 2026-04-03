@@ -49,16 +49,14 @@ export interface Package {
   created_at: string;
 }
 
-export interface Service {
+// ─── RateCard (replaces old Service model) ───────────────────────────────────
+// One uploaded file (JPG / PNG / PDF) = one visual rate card poster on the site.
+// No hardcoded service names, prices, or categories — purely upload-driven.
+export interface RateCard {
   id: string;
-  name: string;
-  category?: string;
-  starting_price?: number;
-  description?: string;
-  image_url?: string;       // jpg/png
-  rate_card_url?: string;   // pdf or image
-  file_type?: "image" | "pdf";
-  is_active: boolean;
+  title?: string;        // optional caption shown below the card
+  file_url: string;      // public URL stored in Supabase storage (ratecard bucket)
+  file_type: "image" | "pdf";
   sort_order: number;
   created_at: string;
 }
