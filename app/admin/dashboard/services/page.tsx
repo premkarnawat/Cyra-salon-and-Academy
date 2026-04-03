@@ -2,412 +2,190 @@
 
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { Upload, Trash2, Loader2, FileText, Edit2, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Upload, Trash2, Loader2, FileText,
-  GripVertical, Edit2, Check, X as XIcon,
-} from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { adminFetch } from "@/lib/adminFetch";
 import toast from "react-hot-toast";
 import type { RateCard } from "@/types";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function fileType(file: File): "image" | "pdf" {
-  return file.type === "application/pdf" ? "pdf" : "image";
+const ALLOWED = "image/jpeg,image/png,image/webp,application/pdf";
+
+interface Pending {
+  localId:string; file:File; preview:string;
+  type:"image"|"pdf"; title:string; uploading:boolean; error?:string;
 }
 
-const ALLOWED_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
-const ALLOWED_EXT    = ["jpg", "jpeg", "png", "webp", "pdf"];
-
-// ─── Pending upload item (before it's sent to server) ────────────────────────
-interface PendingItem {
-  localId: string;
-  file: File;
-  preview: string;          // object URL for images; empty for PDFs
-  type: "image" | "pdf";
-  title: string;
-  uploading: boolean;
-  error?: string;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function RateCardsAdminPage() {
+export default function RateCardsPage() {
+  const { token, loading:authLoading } = useAdminAuth();
   const [cards,   setCards]   = useState<RateCard[]>([]);
+  const [pending, setPending] = useState<Pending[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<PendingItem[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragging,setDragging]= useState(false);
+  const [editId,  setEditId]  = useState<string|null>(null);
+  const [editTitle,setEditTitle]=useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  // ── Inline-edit state ──────────────────────────────────────────────────────
-  const [editId,    setEditId]    = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-
-  // ── Load existing rate cards ───────────────────────────────────────────────
   async function load() {
-    setLoading(true);
-    const r = await fetch("/api/rate-cards");
-    const d = await r.json();
-    if (Array.isArray(d)) setCards(d);
-    setLoading(false);
+    if(!token) return; setLoading(true);
+    const r=await adminFetch("/api/rate-cards",{token}); const d=await r.json();
+    if(Array.isArray(d)) setCards(d); setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(()=>{ if(!authLoading&&token) load(); },[token,authLoading]);
 
-  // ── File validation ────────────────────────────────────────────────────────
-  function validateFile(file: File): string | null {
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!ALLOWED_EXT.includes(ext)) return `"${file.name}" — only JPG, PNG, WebP, PDF allowed`;
-    if (file.size > 20 * 1024 * 1024) return `"${file.name}" — max file size is 20 MB`;
-    return null;
-  }
-
-  // ── Queue files for upload ─────────────────────────────────────────────────
-  function queueFiles(files: FileList | File[]) {
-    const arr = Array.from(files);
-    const newItems: PendingItem[] = [];
-
-    for (const file of arr) {
-      const err = validateFile(file);
-      if (err) { toast.error(err); continue; }
-      const type    = fileType(file);
-      const preview = type === "image" ? URL.createObjectURL(file) : "";
-      newItems.push({
-        localId:   crypto.randomUUID(),
-        file,
-        preview,
-        type,
-        title:     file.name.replace(/\.[^.]+$/, ""), // default = filename without ext
-        uploading: false,
-      });
-    }
-
-    setPending(prev => [...prev, ...newItems]);
+  function queue(files:FileList|File[]) {
+    Array.from(files).forEach(file=>{
+      const ext=file.name.split(".").pop()?.toLowerCase()??"";
+      if(!["jpg","jpeg","png","webp","pdf"].includes(ext)){ toast.error(`${file.name} — unsupported type`); return; }
+      if(file.size>20*1024*1024){ toast.error(`${file.name} — max 20 MB`); return; }
+      const type=ext==="pdf"?"pdf":"image";
+      const preview=type==="image"?URL.createObjectURL(file):"";
+      setPending(p=>[...p,{localId:crypto.randomUUID(),file,preview,type,title:file.name.replace(/\.[^.]+$/,""),uploading:false}]);
+    });
   }
 
-  // ── Upload a single pending item ───────────────────────────────────────────
-  async function uploadItem(localId: string) {
-    const item = pending.find(p => p.localId === localId);
-    if (!item) return;
-
-    setPending(prev => prev.map(p => p.localId === localId ? { ...p, uploading: true, error: undefined } : p));
-
+  async function uploadOne(localId:string) {
+    const item=pending.find(p=>p.localId===localId); if(!item) return;
+    setPending(p=>p.map(x=>x.localId===localId?{...x,uploading:true,error:undefined}:x));
     try {
-      const formData = new FormData();
-      formData.append("file",       item.file);
-      formData.append("title",      item.title.trim());
-      formData.append("sort_order", String(cards.length + pending.indexOf(item)));
-
-      const res  = await fetch("/api/rate-cards", { method: "POST", body: formData });
-      const data = await res.json();
-
-      if (!res.ok || data.error) throw new Error(data.error ?? "Upload failed");
-
-      // Revoke object URL
-      if (item.preview) URL.revokeObjectURL(item.preview);
-
-      // Remove from pending, add to cards
-      setPending(prev => prev.filter(p => p.localId !== localId));
-      setCards(prev => [...prev, data]);
-      toast.success("Rate card uploaded!");
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Upload failed";
-      setPending(prev => prev.map(p => p.localId === localId ? { ...p, uploading: false, error: msg } : p));
+      const fd=new FormData();
+      fd.append("file",item.file);
+      fd.append("title",item.title.trim());
+      fd.append("sort_order",String(cards.length));
+      const headers: HeadersInit = {};
+      if (token) headers["Authorization"]=`Bearer ${token}`;
+      const res=await fetch("/api/rate-cards",{method:"POST",headers,body:fd});
+      const data=await res.json();
+      if(!res.ok||data.error) throw new Error(data.error??"Upload failed");
+      if(item.preview) URL.revokeObjectURL(item.preview);
+      setPending(p=>p.filter(x=>x.localId!==localId));
+      setCards(c=>[...c,data]);
+      toast.success("Uploaded!");
+    } catch(e:unknown) {
+      const msg=e instanceof Error?e.message:"Upload failed";
+      setPending(p=>p.map(x=>x.localId===localId?{...x,uploading:false,error:msg}:x));
       toast.error(msg);
     }
   }
 
-  // ── Upload all pending at once ─────────────────────────────────────────────
-  async function uploadAll() {
-    for (const item of pending.filter(p => !p.uploading)) {
-      await uploadItem(item.localId);
-    }
+  async function uploadAll() { for(const i of pending.filter(p=>!p.uploading)) await uploadOne(i.localId); }
+
+  async function del(id:string) {
+    if(!confirm("Delete this rate card?")) return;
+    await adminFetch("/api/rate-cards",{method:"DELETE",body:{id},token});
+    toast.success("Deleted"); setCards(c=>c.filter(x=>x.id!==id));
   }
 
-  // ── Remove a pending item (not yet uploaded) ───────────────────────────────
-  function removePending(localId: string) {
-    setPending(prev => {
-      const item = prev.find(p => p.localId === localId);
-      if (item?.preview) URL.revokeObjectURL(item.preview);
-      return prev.filter(p => p.localId !== localId);
-    });
+  async function saveTitle(card:RateCard) {
+    if(editTitle.trim()===(card.title??"")){ setEditId(null); return; }
+    const r=await adminFetch("/api/rate-cards",{method:"PATCH",body:{id:card.id,title:editTitle.trim()},token});
+    const d=await r.json();
+    if(d.error) return toast.error(d.error);
+    setCards(c=>c.map(x=>x.id===card.id?{...x,title:editTitle.trim()}:x));
+    setEditId(null); toast.success("Updated");
   }
-
-  // ── Delete saved card from DB + storage ───────────────────────────────────
-  async function deleteCard(id: string) {
-    if (!confirm("Delete this rate card? This cannot be undone.")) return;
-    const res  = await fetch("/api/rate-cards", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    const data = await res.json();
-    if (data.error) return toast.error(data.error);
-    toast.success("Deleted");
-    setCards(prev => prev.filter(c => c.id !== id));
-  }
-
-  // ── Inline title edit ──────────────────────────────────────────────────────
-  async function saveTitle(card: RateCard) {
-    if (editTitle.trim() === (card.title ?? "")) { setEditId(null); return; }
-    const res  = await fetch("/api/rate-cards", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: card.id, title: editTitle.trim() }),
-    });
-    const data = await res.json();
-    if (data.error) return toast.error(data.error);
-    setCards(prev => prev.map(c => c.id === card.id ? { ...c, title: editTitle.trim() } : c));
-    setEditId(null);
-    toast.success("Title updated");
-  }
-
-  // ── Drag-and-drop ──────────────────────────────────────────────────────────
-  function onDragOver(e: React.DragEvent) { e.preventDefault(); setDragging(true); }
-  function onDragLeave()                  { setDragging(false); }
-  function onDrop(e: React.DragEvent)     {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files.length) queueFiles(e.dataTransfer.files);
-  }
-
-  const inputStyle: React.CSSProperties = { background: "rgba(255,255,255,0.05)", color: "#F0E8D8" };
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-
-        {/* ── Page header ── */}
+      <div className="space-y-7">
         <div>
-          <h2 className="font-cormorant text-2xl text-[#F0E8D8]">Rate Card Manager</h2>
-          <p className="text-xs text-[rgba(240,232,216,0.4)] mt-1 leading-relaxed">
-            Upload your designed rate card posters (JPG, PNG, WebP or PDF).
-            Each upload becomes one poster card on the website.
-          </p>
+          <h2 className="text-xl font-semibold text-[#111827]">Rate Cards</h2>
+          <p className="text-sm text-[#6B7280] mt-0.5">Upload designed rate card posters — JPG, PNG, WebP or PDF</p>
         </div>
 
-        {/* ── Drop zone ── */}
-        <div
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`
-            relative flex flex-col items-center justify-center
-            min-h-[160px] rounded-2xl cursor-pointer
-            border-2 border-dashed transition-all duration-250
-            ${dragging
-              ? "border-[var(--gold)] bg-[rgba(191,160,106,0.08)] scale-[1.01]"
-              : "border-[rgba(191,160,106,0.25)] hover:border-[rgba(191,160,106,0.5)] hover:bg-[rgba(191,160,106,0.04)]"
-            }
-          `}
-        >
-          <Upload size={28} className="text-[var(--gold)] opacity-60 mb-3" />
-          <p className="font-jost text-sm text-[rgba(240,232,216,0.6)]">
-            {dragging ? "Drop files here" : "Click or drag & drop files here"}
-          </p>
-          <p className="font-jost text-[11px] text-[rgba(240,232,216,0.3)] mt-1.5 tracking-wide">
-            JPG · PNG · WebP · PDF · Max 20 MB each · Multiple files supported
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ALLOWED_ACCEPT}
-            multiple
-            className="hidden"
-            onChange={e => { if (e.target.files) queueFiles(e.target.files); e.target.value = ""; }}
-          />
+        {/* Drop zone */}
+        <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)}
+          onDrop={e=>{e.preventDefault();setDragging(false);if(e.dataTransfer.files.length) queue(e.dataTransfer.files);}}
+          onClick={()=>fileRef.current?.click()}
+          className={`flex flex-col items-center justify-center min-h-[140px] rounded-2xl cursor-pointer border-2 border-dashed transition-all ${dragging?"border-[var(--gold)] bg-[rgba(191,160,106,0.05)]":"border-[rgba(191,160,106,0.3)] hover:border-[rgba(191,160,106,0.55)] hover:bg-[rgba(191,160,106,0.02)]"}`}>
+          <Upload size={24} className="text-[var(--gold-dark)] opacity-70 mb-2"/>
+          <p className="text-sm font-medium text-[#374151]">{dragging?"Drop here":"Click or drag & drop"}</p>
+          <p className="text-xs text-[#9CA3AF] mt-1">JPG · PNG · WebP · PDF · Max 20 MB</p>
+          <input ref={fileRef} type="file" accept={ALLOWED} multiple className="hidden" onChange={e=>{if(e.target.files) queue(e.target.files); e.target.value="";}}/>
         </div>
 
-        {/* ── Pending queue ── */}
+        {/* Pending queue */}
         <AnimatePresence>
-          {pending.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-4"
-            >
+          {pending.length>0 && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-cormorant text-lg text-[var(--gold-light)]">
-                  Ready to upload ({pending.length})
-                </h3>
-                <button
-                  onClick={uploadAll}
-                  className="btn-gold flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] tracking-[0.15em]"
-                >
-                  <Upload size={13} /> Upload All
-                </button>
+                <h3 className="font-semibold text-[#111827]">Ready to Upload ({pending.length})</h3>
+                <button onClick={uploadAll} className="btn-gold flex items-center gap-2 px-4 py-2 rounded-xl text-xs tracking-[0.12em]"><Upload size={12}/>Upload All</button>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pending.map(item => (
-                  <motion.div
-                    key={item.localId}
-                    layout
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.88 }}
-                    className="bg-[var(--dark-700)] rounded-2xl border border-[rgba(191,160,106,0.12)] overflow-hidden"
-                  >
-                    {/* Preview */}
-                    <div className="relative bg-[var(--dark-600)]" style={{ aspectRatio: "3/4" }}>
-                      {item.type === "image" && item.preview ? (
-                        <Image src={item.preview} alt={item.title} fill className="object-contain p-2" unoptimized />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full gap-2">
-                          <FileText size={32} className="text-[var(--gold)] opacity-50" />
-                          <span className="font-jost text-xs text-[rgba(240,232,216,0.4)] tracking-wide">PDF</span>
-                        </div>
-                      )}
-                      {item.uploading && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <Loader2 size={24} className="text-[var(--gold)] animate-spin" />
-                        </div>
-                      )}
+                {pending.map(item=>(
+                  <div key={item.localId} className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+                    <div className="relative bg-[#F9FAFB]" style={{aspectRatio:"3/4"}}>
+                      {item.type==="image"&&item.preview
+                        ?<Image src={item.preview} alt={item.title} fill className="object-contain p-2" unoptimized/>
+                        :<div className="flex flex-col items-center justify-center h-full gap-2"><FileText size={28} className="text-[var(--gold-dark)] opacity-50"/><span className="text-xs text-[#6B7280]">PDF</span></div>
+                      }
+                      {item.uploading&&<div className="absolute inset-0 bg-white/70 flex items-center justify-center"><Loader2 size={20} className="animate-spin text-[var(--gold)]"/></div>}
                     </div>
-
-                    {/* Controls */}
                     <div className="p-3 space-y-2">
-                      <input
-                        value={item.title}
-                        onChange={e => setPending(prev => prev.map(p => p.localId === item.localId ? { ...p, title: e.target.value } : p))}
-                        placeholder="Optional title / caption"
-                        className="input-luxury text-sm w-full"
-                        style={inputStyle}
-                      />
-                      {item.error && (
-                        <p className="text-[11px] text-red-400 font-jost">{item.error}</p>
-                      )}
+                      <input value={item.title} onChange={e=>setPending(p=>p.map(x=>x.localId===item.localId?{...x,title:e.target.value}:x))}
+                        placeholder="Caption (optional)" className="admin-input text-sm w-full"/>
+                      {item.error&&<p className="text-xs text-red-500">{item.error}</p>}
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => uploadItem(item.localId)}
-                          disabled={item.uploading}
-                          className="flex-1 flex items-center justify-center gap-1.5 btn-gold py-2 rounded-lg text-[11px] tracking-[0.12em] disabled:opacity-50"
-                        >
-                          {item.uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                          Upload
+                        <button onClick={()=>uploadOne(item.localId)} disabled={item.uploading}
+                          className="flex-1 flex items-center justify-center gap-1.5 btn-gold py-2 rounded-lg text-xs tracking-[0.1em] disabled:opacity-50">
+                          {item.uploading?<Loader2 size={11} className="animate-spin"/>:<Upload size={11}/>}Upload
                         </button>
-                        <button
-                          onClick={() => removePending(item.localId)}
-                          disabled={item.uploading}
-                          className="w-9 h-9 rounded-lg border border-[rgba(239,68,68,0.3)] text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors disabled:opacity-40"
-                        >
-                          <XIcon size={14} />
+                        <button onClick={()=>{if(item.preview) URL.revokeObjectURL(item.preview); setPending(p=>p.filter(x=>x.localId!==item.localId));}}
+                          className="w-9 h-9 rounded-lg border border-[#E5E7EB] text-[#9CA3AF] hover:bg-red-50 hover:text-red-500 flex items-center justify-center">
+                          <X size={13}/>
                         </button>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Saved cards ── */}
+        {/* Published cards */}
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="font-cormorant text-xl text-[#F0E8D8]">
-              Published Cards
-              <span className="ml-2 font-jost text-sm font-normal text-[rgba(240,232,216,0.3)]">
-                ({cards.length})
-              </span>
-            </h3>
-          </div>
-
-          {loading ? (
-            <LoadingSpinner />
-          ) : cards.length === 0 ? (
-            <div className="text-center py-14 text-[rgba(240,232,216,0.25)] text-sm font-jost">
-              No rate cards yet — upload your first one above
-            </div>
+          <h3 className="font-semibold text-[#111827] mb-4">Published ({cards.length})</h3>
+          {(authLoading||loading) ? <LoadingSpinner/> : cards.length===0 ? (
+            <div className="text-center py-12 text-[#9CA3AF] text-sm bg-white rounded-2xl border border-[#E5E7EB]">No rate cards yet</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {cards.map(card => (
-                <motion.div
-                  key={card.id}
-                  layout
-                  className="bg-[var(--dark-700)] rounded-2xl border border-[rgba(191,160,106,0.1)] overflow-hidden group"
-                >
-                  {/* Preview */}
-                  <div
-                    className="relative bg-[var(--dark-600)]"
-                    style={{ aspectRatio: "3/4" }}
-                    onContextMenu={e => e.preventDefault()}
-                  >
-                    {card.file_type === "pdf" ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-2 pointer-events-none">
-                        <FileText size={30} className="text-[var(--gold)] opacity-40" />
-                        <span className="font-jost text-[10px] text-[rgba(240,232,216,0.3)] tracking-widest uppercase">PDF</span>
-                      </div>
-                    ) : (
-                      <Image
-                        src={card.file_url}
-                        alt={card.title || "Rate card"}
-                        fill
-                        className="object-contain p-2"
-                        unoptimized
-                        draggable={false}
-                      />
-                    )}
-
-                    {/* Delete overlay */}
-                    <button
-                      onClick={() => deleteCard(card.id)}
-                      className="
-                        absolute top-2 right-2
-                        w-8 h-8 rounded-full
-                        bg-red-500/80 hover:bg-red-500
-                        flex items-center justify-center text-white
-                        opacity-0 group-hover:opacity-100 transition-all
-                        shadow-lg
-                      "
-                      aria-label="Delete"
-                    >
-                      <Trash2 size={13} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {cards.map(card=>(
+                <div key={card.id} className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden group">
+                  <div className="relative bg-[#F9FAFB]" style={{aspectRatio:"3/4"}}>
+                    {card.file_type==="pdf"
+                      ?<div className="flex flex-col items-center justify-center h-full gap-1"><FileText size={24} className="text-[var(--gold-dark)] opacity-40"/><span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest">PDF</span></div>
+                      :<Image src={card.file_url} alt={card.title||"Rate card"} fill className="object-contain p-1.5" unoptimized/>
+                    }
+                    <button onClick={()=>del(card.id)}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow border border-[#E5E7EB] flex items-center justify-center text-[#9CA3AF] hover:text-red-500 hover:border-red-200 opacity-0 group-hover:opacity-100 transition-all">
+                      <Trash2 size={12}/>
                     </button>
-
-                    {/* File type badge */}
-                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/40 backdrop-blur-sm">
-                      <span className="font-jost text-[9px] uppercase tracking-widest text-[rgba(255,255,255,0.5)]">
-                        {card.file_type}
-                      </span>
-                    </div>
                   </div>
-
-                  {/* Title with inline edit */}
-                  <div className="px-3 py-3">
-                    {editId === card.id ? (
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          autoFocus
-                          value={editTitle}
-                          onChange={e => setEditTitle(e.target.value)}
-                          onKeyDown={e => { if (e.key === "Enter") saveTitle(card); if (e.key === "Escape") setEditId(null); }}
-                          className="flex-1 text-xs bg-[rgba(255,255,255,0.07)] text-[#F0E8D8] rounded-lg px-2 py-1.5 border border-[rgba(191,160,106,0.3)] outline-none"
-                        />
-                        <button onClick={() => saveTitle(card)} className="text-[var(--gold)] hover:text-[var(--gold-light)]"><Check size={14} /></button>
-                        <button onClick={() => setEditId(null)} className="text-[rgba(240,232,216,0.4)] hover:text-red-400"><XIcon size={14} /></button>
+                  <div className="px-3 py-2.5">
+                    {editId===card.id ? (
+                      <div className="flex items-center gap-1">
+                        <input autoFocus value={editTitle} onChange={e=>setEditTitle(e.target.value)}
+                          onKeyDown={e=>{if(e.key==="Enter") saveTitle(card); if(e.key==="Escape") setEditId(null);}}
+                          className="flex-1 text-xs border border-[#E5E7EB] rounded-lg px-2 py-1.5 text-[#374151] outline-none focus:border-[var(--gold)]"/>
+                        <button onClick={()=>saveTitle(card)} className="text-green-500 hover:text-green-600"><Check size={13}/></button>
+                        <button onClick={()=>setEditId(null)} className="text-[#9CA3AF] hover:text-red-500"><X size={13}/></button>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-cormorant text-sm text-[rgba(240,232,216,0.7)] truncate flex-1">
-                          {card.title || <span className="italic opacity-40">No title</span>}
-                        </p>
-                        <button
-                          onClick={() => { setEditId(card.id); setEditTitle(card.title ?? ""); }}
-                          className="text-[rgba(240,232,216,0.3)] hover:text-[var(--gold)] transition-colors flex-shrink-0"
-                        >
-                          <Edit2 size={12} />
-                        </button>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-[#374151] truncate flex-1">{card.title||<span className="text-[#9CA3AF] italic">No title</span>}</p>
+                        <button onClick={()=>{setEditId(card.id);setEditTitle(card.title??"");}} className="text-[#D1D5DB] hover:text-[var(--gold-dark)] flex-shrink-0"><Edit2 size={11}/></button>
                       </div>
                     )}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
         </div>
-
       </div>
     </AdminLayout>
   );
