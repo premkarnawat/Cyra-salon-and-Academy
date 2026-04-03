@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: "/admin/dashboard/banners",    label: "Banners",     icon: Image },
   { href: "/admin/dashboard/offers",     label: "Offers",      icon: Gift },
   { href: "/admin/dashboard/packages",   label: "Packages",    icon: Package },
-  { href: "/admin/dashboard/services",   label: "Services",    icon: Scissors },
+  { href: "/admin/dashboard/services",   label: "Rate Cards",  icon: Scissors },
   { href: "/admin/dashboard/gallery",    label: "Gallery",     icon: GalleryHorizontal },
   { href: "/admin/dashboard/reviews",    label: "Reviews",     icon: Star },
   { href: "/admin/dashboard/settings",   label: "Settings",    icon: Settings },
