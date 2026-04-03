@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, Trash2, Loader2, FileText,
-  Edit2, Check, X as XIcon,
+  GripVertical, Edit2, Check, X as XIcon,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -18,7 +18,7 @@ function fileType(file: File): "image" | "pdf" {
 }
 
 const ALLOWED_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
-const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp", "pdf"];
+const ALLOWED_EXT    = ["jpg", "jpeg", "png", "webp", "pdf"];
 
 // ─── Pending upload item ──────────────────────────────────────────────────────
 interface PendingItem {
@@ -41,7 +41,7 @@ export default function RateCardsAdminPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
-  // ── Load cards ──────────────────────────────────────────────────────────────
+  // ── Load existing rate cards ───────────────────────────────────────────────
   async function load() {
     setLoading(true);
     const r = await fetch("/api/rate-cards");
@@ -51,15 +51,15 @@ export default function RateCardsAdminPage() {
   }
   useEffect(() => { load(); }, []);
 
-  // ── Validate file ───────────────────────────────────────────────────────────
+  // ── File validation ────────────────────────────────────────────────────────
   function validateFile(file: File): string | null {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!ALLOWED_EXT.includes(ext)) return "Invalid file type";
-    if (file.size > 20 * 1024 * 1024) return "Max file size is 20MB";
+    if (!ALLOWED_EXT.includes(ext)) return `"${file.name}" — invalid type`;
+    if (file.size > 20 * 1024 * 1024) return `"${file.name}" — max 20MB`;
     return null;
   }
 
-  // ── Queue files ─────────────────────────────────────────────────────────────
+  // ── Queue files ───────────────────────────────────────────────────────────
   function queueFiles(files: FileList | File[]) {
     const arr = Array.from(files);
     const newItems: PendingItem[] = [];
@@ -84,7 +84,7 @@ export default function RateCardsAdminPage() {
     setPending(prev => [...prev, ...newItems]);
   }
 
-  // ── ✅ FIXED UPLOAD FUNCTION ────────────────────────────────────────────────
+  // ── ✅ FIXED UPLOAD FUNCTION (ONLY CHANGE) ─────────────────────────────────
   async function uploadItem(localId: string) {
     const item = pending.find(p => p.localId === localId);
     if (!item) return;
@@ -113,6 +113,7 @@ export default function RateCardsAdminPage() {
 
       let data;
 
+      // ✅ SAFE JSON FIX
       try {
         data = await res.json();
       } catch {
@@ -121,7 +122,7 @@ export default function RateCardsAdminPage() {
 
         throw new Error(
           text.includes("too large")
-            ? "File too large (max ~4MB). Compress your PDF."
+            ? "File too large (max ~4MB). Compress PDF."
             : "Server error: " + text
         );
       }
@@ -135,7 +136,7 @@ export default function RateCardsAdminPage() {
       setPending(prev => prev.filter(p => p.localId !== localId));
       setCards(prev => [...prev, data]);
 
-      toast.success("Uploaded!");
+      toast.success("Rate card uploaded!");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Upload failed";
 
@@ -191,9 +192,11 @@ export default function RateCardsAdminPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-2xl text-white">Rate Card Manager</h2>
+        </div>
 
-        {/* Upload */}
         <input
           ref={fileInputRef}
           type="file"
@@ -210,18 +213,14 @@ export default function RateCardsAdminPage() {
           Upload Files
         </button>
 
-        {/* Pending */}
         {pending.map(item => (
           <div key={item.localId}>
             <p>{item.title}</p>
-            <button onClick={() => uploadItem(item.localId)}>
-              Upload
-            </button>
+            <button onClick={() => uploadItem(item.localId)}>Upload</button>
             {item.error && <p>{item.error}</p>}
           </div>
         ))}
 
-        {/* Cards */}
         {loading ? <LoadingSpinner /> : (
           <div>
             {cards.map(card => (
@@ -231,17 +230,12 @@ export default function RateCardsAdminPage() {
                 ) : (
                   <Image src={card.file_url} alt="" width={100} height={100} />
                 )}
-
                 <p>{card.title}</p>
-
-                <button onClick={() => deleteCard(card.id)}>
-                  Delete
-                </button>
+                <button onClick={() => deleteCard(card.id)}>Delete</button>
               </div>
             ))}
           </div>
         )}
-
       </div>
     </AdminLayout>
   );
