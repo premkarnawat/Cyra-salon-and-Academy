@@ -4,104 +4,92 @@ import { useEffect, useState } from "react";
 import { Phone, Trash2, Search, Download } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { adminFetch } from "@/lib/adminFetch";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 import type { LeadEntry } from "@/types";
 
 export default function LeadsPage() {
-  const [leads,   setLeads]   = useState<LeadEntry[]>([]);
+  const { token, loading: authLoading } = useAdminAuth();
+  const [leads,    setLeads]    = useState<LeadEntry[]>([]);
   const [filtered, setFiltered] = useState<LeadEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query,   setQuery]   = useState("");
+  const [loading,  setLoading]  = useState(true);
+  const [query,    setQuery]    = useState("");
 
   async function load() {
+    if (!token) return;
     setLoading(true);
-    const res = await fetch("/api/admin/leads");
-    const data = await res.json();
-    if (Array.isArray(data)) { setLeads(data); setFiltered(data); }
+    const res = await adminFetch("/api/admin/leads", { token });
+    const d   = await res.json();
+    if (Array.isArray(d)) { setLeads(d); setFiltered(d); }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!authLoading && token) load(); }, [token, authLoading]);
 
   useEffect(() => {
     const q = query.toLowerCase();
-    setFiltered(leads.filter(l =>
-      l.name.toLowerCase().includes(q) || l.contact.includes(q)
-    ));
+    setFiltered(leads.filter(l => l.name.toLowerCase().includes(q) || l.contact.includes(q)));
   }, [query, leads]);
 
-  async function deleteLead(id: string) {
-    if (!confirm("Delete this lead entry?")) return;
-    const res = await fetch("/api/admin/leads", { method:"DELETE", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ id }) });
-    if ((await res.json()).success) {
-      toast.success("Deleted");
-      load();
-    }
+  async function del(id: string) {
+    if (!confirm("Delete this lead?")) return;
+    await adminFetch("/api/admin/leads", { method:"DELETE", body:{ id }, token });
+    toast.success("Deleted");
+    load();
   }
 
-  function exportCSV() {
-    const rows = [["Name","Contact","DOB","Date"], ...leads.map(l => [l.name, l.contact, l.dob, formatDate(l.created_at)])];
-    const csv  = rows.map(r => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type:"text/csv" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a"); a.href = url; a.download = "cyra-leads.csv"; a.click();
+  function exportCsv() {
+    const rows = [["Name","Contact","DOB","Date"], ...leads.map(l => [l.name,l.contact,l.dob,formatDate(l.created_at)])];
+    const csv  = rows.map(r=>r.join(",")).join("\n");
+    const a    = Object.assign(document.createElement("a"), { href:URL.createObjectURL(new Blob([csv],{type:"text/csv"})), download:"cyra-leads.csv" });
+    a.click();
   }
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="font-cormorant text-2xl text-[#F0E8D8]">Lead Entries</h2>
-            <p className="text-xs text-[rgba(240,232,216,0.4)] mt-1">{leads.length} total captures</p>
+            <h2 className="text-xl font-semibold text-[#111827]">Leads</h2>
+            <p className="text-sm text-[#6B7280]">{leads.length} total captures</p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Search */}
+          <div className="flex items-center gap-2">
             <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(191,160,106,0.5)]" />
-              <input
-                type="text"
-                placeholder="Search leads…"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                className="pl-8 pr-4 py-2 text-sm bg-[var(--dark-700)] border border-[rgba(191,160,106,0.2)] rounded-xl text-[#F0E8D8] outline-none focus:border-[var(--gold)] placeholder:text-[rgba(240,232,216,0.3)] w-44 md:w-56"
-              />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+              <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search…"
+                className="pl-8 pr-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-xl text-[#374151] outline-none focus:border-[var(--gold)] w-44 placeholder:text-[#9CA3AF]" />
             </div>
-            <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgba(191,160,106,0.25)] text-[var(--gold)] text-xs hover:bg-[rgba(191,160,106,0.08)] transition-colors">
-              <Download size={13} /> CSV
+            <button onClick={exportCsv}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#E5E7EB] bg-white text-[#374151] text-xs font-medium hover:bg-[#F9FAFB] transition-colors">
+              <Download size={13}/> CSV
             </button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-[var(--dark-700)] rounded-2xl border border-[rgba(191,160,106,0.1)] overflow-hidden">
-          {loading ? <LoadingSpinner /> : filtered.length === 0 ? (
-            <div className="text-center py-12 text-[rgba(240,232,216,0.3)] text-sm">No leads found</div>
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+          {(authLoading||loading) ? <LoadingSpinner /> : filtered.length===0 ? (
+            <div className="text-center py-12 text-[#9CA3AF] text-sm">No leads found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full admin-table">
-                <thead>
-                  <tr className="text-left">
-                    <th>#</th><th>Name</th><th>Contact</th><th>DOB</th><th>Captured</th><th>Actions</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>DOB</th><th>Captured</th><th>Actions</th></tr></thead>
                 <tbody>
-                  {filtered.map((lead, i) => (
-                    <tr key={lead.id}>
-                      <td className="text-[rgba(240,232,216,0.3)] text-xs">{i+1}</td>
-                      <td className="font-medium text-[#F0E8D8]">{lead.name}</td>
-                      <td className="text-[rgba(240,232,216,0.6)]">{lead.contact}</td>
-                      <td className="text-[rgba(240,232,216,0.5)] text-xs">{lead.dob}</td>
-                      <td className="text-[rgba(240,232,216,0.4)] text-xs">{formatDate(lead.created_at)}</td>
+                  {filtered.map((l,i) => (
+                    <tr key={l.id}>
+                      <td className="text-[#9CA3AF] text-xs">{i+1}</td>
+                      <td className="font-medium text-[#111827]">{l.name}</td>
+                      <td className="text-[#374151]">{l.contact}</td>
+                      <td className="text-[#6B7280] text-xs">{l.dob}</td>
+                      <td className="text-[#9CA3AF] text-xs">{formatDate(l.created_at)}</td>
                       <td>
                         <div className="flex items-center gap-2">
-                          <a href={`tel:${lead.contact}`} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[rgba(37,211,102,0.1)] text-[#25D366] text-[11px] hover:bg-[rgba(37,211,102,0.2)] transition-colors">
-                            <Phone size={11} /> Call
+                          <a href={`tel:${l.contact}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium border border-green-200 hover:bg-green-100">
+                            <Phone size={11}/> Call
                           </a>
-                          <button onClick={() => deleteLead(lead.id)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[rgba(239,68,68,0.08)] text-red-400 text-[11px] hover:bg-[rgba(239,68,68,0.16)] transition-colors">
-                            <Trash2 size={11} /> Delete
+                          <button onClick={()=>del(l.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-medium border border-red-200 hover:bg-red-100">
+                            <Trash2 size={11}/>
                           </button>
                         </div>
                       </td>
