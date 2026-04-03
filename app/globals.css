@@ -256,24 +256,54 @@
     appearance: none;
   }
 
-  /* ── Admin table ── */
+  /* ── Admin table — light theme ── */
   .admin-table th {
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--gold);
-    font-weight: 600;
+    color: var(--gold-dark);
+    font-weight: 700;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(191,160,106,0.15);
+    border-bottom: 1px solid rgba(191,160,106,0.18);
+    background: rgba(191,160,106,0.03);
   }
   .admin-table td {
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgba(191,160,106,0.07);
-    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(191,160,106,0.08);
+    font-size: 0.88rem;
+    color: #3D3527;
   }
   .admin-table tr:hover td {
-    background: rgba(191,160,106,0.04);
+    background: rgba(191,160,106,0.05);
   }
+
+  /* ── Admin card / form box ── */
+  .admin-card {
+    background: #FFFFFF;
+    border: 1px solid rgba(191,160,106,0.15);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+
+  /* ── Admin input (light) ── */
+  .admin-input {
+    width: 100%;
+    background: #FDFAF4;
+    border: 1px solid rgba(191,160,106,0.22);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: #1C1710;
+    font-size: 0.875rem;
+    font-family: 'Jost', sans-serif;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .admin-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(191,160,106,0.12);
+  }
+  .admin-input::placeholder { color: rgba(140,122,94,0.45); }
 
   /* ── Page transition ── */
   .page-enter {
@@ -311,4 +341,13 @@
     width: 100%; height: 100%;
     object-fit: cover;
   }
+}
+
+/* ── Dynamic font overrides (applied via useSiteSettings from DB) ── */
+.font-brand-dynamic { font-family: var(--font-brand-override, 'Cinzel Decorative', serif); }
+.font-body-dynamic  { font-family: var(--font-body-override,  'Jost', sans-serif); }
+
+/* ── Step 8: responsive + polish ── */
+@media (max-width: 640px) {
+  .btn-gold, .btn-ghost-gold { min-height: 44px; }
 }
