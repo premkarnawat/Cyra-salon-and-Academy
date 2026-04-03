@@ -3,128 +3,118 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showPw,   setShowPw]   = useState(false);
+  const [loading,  setLoading]  = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-
     try {
       const supabase = createClient();
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(error.message);
-
       toast.success("Welcome back!");
-
-      // ✅ IMPORTANT FIX (delay for session)
-      setTimeout(() => {
-        router.push("/admin/dashboard");
-      }, 500);
-
+      router.push("/admin/dashboard");
+      router.refresh();
     } catch (e: unknown) {
-      toast.error(String(e));
+      toast.error(e instanceof Error ? e.message : "Login failed");
     } finally {
       setLoading(false);
     }
   }
 
+  const inputBase = `
+    w-full bg-[#FDFAF4] border border-[rgba(191,160,106,0.25)]
+    rounded-xl px-4 pt-[18px] pb-[8px] text-[14px] text-[#1C1710]
+    font-jost outline-none transition-all duration-250
+    focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(191,160,106,0.14)]
+    placeholder:text-transparent
+  `;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--dark-900)] relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          background:
-            "radial-gradient(ellipse at 30% 50%, rgba(191,160,106,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(140,110,48,0.1) 0%, transparent 60%)",
-        }}
-      />
+    <div className="min-h-screen flex items-center justify-center bg-[var(--cream-100)] px-4">
+      {/* Warm gold glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[20%] w-[600px] h-[600px] rounded-full opacity-30"
+          style={{ background: "radial-gradient(circle, rgba(191,160,106,0.18) 0%, transparent 70%)", filter: "blur(60px)" }} />
+      </div>
 
       <motion.div
-        className="relative z-10 w-full max-w-sm px-4"
+        className="relative z-10 w-full max-w-[400px]"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
       >
-        <div className="glass-dark rounded-3xl p-8 shadow-[0_40px_100px_rgba(0,0,0,0.6)]">
-          <div className="text-center mb-8">
-            <div className="font-cinzel text-3xl tracking-[0.2em] text-[var(--gold-light)] mb-1">
-              CYRA
-            </div>
-            <div className="w-8 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto my-3" />
-            <p className="text-[10px] tracking-[0.3em] uppercase text-[rgba(191,160,106,0.5)]">
-              Admin Portal
-            </p>
-          </div>
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-[0_24px_80px_rgba(140,110,48,0.12)] border border-[rgba(191,160,106,0.18)] overflow-hidden">
+          {/* Gold top bar */}
+          <div className="h-[3px] bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder=" "
-                required
-                className="input-luxury text-[#F0E8D8]"
-                style={{ background: "rgba(255,255,255,0.06)", color: "#F0E8D8" }}
-              />
-              <label className="float-label">Email Address</label>
+          <div className="px-8 py-10">
+            {/* Brand */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.2)] mb-4">
+                <Lock size={18} strokeWidth={1.8} className="text-[var(--gold-dark)]" />
+              </div>
+              <div className="font-cinzel text-[1.7rem] tracking-[0.22em] text-[var(--gold-dark)] leading-none">CYRA</div>
+              <div className="font-marcellus text-[0.55rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mt-1.5">Admin Portal</div>
+              <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mt-4" />
             </div>
 
-            <div className="relative">
-              <input
-                type={showPw ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder=" "
-                required
-                className="input-luxury pr-10 text-[#F0E8D8]"
-                style={{ background: "rgba(255,255,255,0.06)", color: "#F0E8D8" }}
-              />
-              <label className="float-label">Password</label>
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgba(191,160,106,0.5)] hover:text-[var(--gold)] transition-colors"
-              >
-                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder=" "
+                  required
+                  className={inputBase}
+                />
+                <label className={`absolute left-4 pointer-events-none font-jost transition-all duration-250 ${
+                  email ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold-dark)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/55"
+                }`}>Email Address</label>
+              </div>
+
+              {/* Password */}
+              <div className="relative">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder=" "
+                  required
+                  className={`${inputBase} pr-11`}
+                />
+                <label className={`absolute left-4 pointer-events-none font-jost transition-all duration-250 ${
+                  password ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold-dark)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/55"
+                }`}>Password</label>
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8C7A5E]/50 hover:text-[var(--gold-dark)] transition-colors">
+                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="btn-gold w-full py-[15px] rounded-xl text-[11.5px] tracking-[0.24em] flex items-center justify-center gap-2 mt-2 disabled:opacity-60">
+                {loading ? <><Loader2 size={15} className="animate-spin" /> Signing in…</> : "Sign In →"}
               </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <a href="/" className="font-jost text-[11px] text-[#8C7A5E]/50 hover:text-[var(--gold-dark)] transition-colors tracking-wide">
+                ← Back to Website
+              </a>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-gold w-full py-4 rounded-xl text-[11px] tracking-[0.25em] flex items-center justify-center gap-2 mt-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" /> Signing in…
-                </>
-              ) : (
-                "Sign In →"
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <a
-              href="/"
-              className="text-[10px] text-[rgba(191,160,106,0.4)] hover:text-[var(--gold)] transition-colors tracking-wide"
-            >
-              ← Back to Website
-            </a>
           </div>
         </div>
       </motion.div>
