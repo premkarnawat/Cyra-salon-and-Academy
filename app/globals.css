@@ -36,7 +36,7 @@
   body {
     font-family: 'Jost', sans-serif;
     background-color: var(--cream-50);
-    color: #1C1710;
+    color: #111827;
     transition: background-color 0.4s ease, color 0.4s ease;
     overflow-x: hidden;
   }
@@ -271,7 +271,7 @@
     padding: 0.85rem 1rem;
     border-bottom: 1px solid rgba(191,160,106,0.08);
     font-size: 0.88rem;
-    color: #3D3527;
+    color: #374151;
   }
   .admin-table tr:hover td {
     background: rgba(191,160,106,0.05);
@@ -289,11 +289,11 @@
   /* ── Admin input (light) ── */
   .admin-input {
     width: 100%;
-    background: #FDFAF4;
+    background: #F9FAFB;
     border: 1px solid rgba(191,160,106,0.22);
     border-radius: 10px;
     padding: 11px 14px;
-    color: #1C1710;
+    color: #111827;
     font-size: 0.875rem;
     font-family: 'Jost', sans-serif;
     outline: none;
