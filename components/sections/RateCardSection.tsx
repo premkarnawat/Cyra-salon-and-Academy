@@ -123,10 +123,9 @@ function SpiralBook({ images }: { images: RateCard[] }) {
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.15}
               onDragEnd={onDragEnd}
-              style={{ x: dragX, cursor: "grab" }}
+              style={{ x: dragX }}   // ✅ ONLY ONE style
               whileDrag={{ cursor: "grabbing" }}
-              className="relative bg-white"
-              style={{ aspectRatio: "3/4" }}
+              className="relative bg-[#F8F9FB] aspect-[3/4] cursor-grab" // ✅ FIXED
             >
               {/* Cover badge */}
               {isCover && (
