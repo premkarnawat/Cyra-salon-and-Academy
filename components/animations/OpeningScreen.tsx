@@ -15,7 +15,7 @@ interface OpeningScreenProps {
 export function OpeningScreen({
   bgUrl = DEFAULT_CONFIG.opening_bg_url,
   logoUrl,
-  salonName = "",
+  salonName = "Cyra",
   onComplete,
 }: OpeningScreenProps) {
   const [phase, setPhase] = useState<"in" | "hold" | "out">("in");
@@ -45,7 +45,7 @@ export function OpeningScreen({
           >
             <Image
               src={bgUrl}
-              alt=""
+              alt="Cyra Salon"
               fill
               className="object-cover"
               priority
@@ -73,15 +73,16 @@ export function OpeningScreen({
                 <Image src={logoUrl} alt={salonName} fill className="object-contain" unoptimized />
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              /* Brand shown ONCE — Cinzel Decorative only, no duplication */
+              <div className="flex flex-col items-center gap-3">
                 <span
                   className="font-cinzel text-5xl md:text-7xl text-[#D4B483] tracking-[0.2em]"
                   style={{ textShadow: "0 0 60px rgba(212,180,131,0.4)" }}
                 >
-                  {salonName}
+                  {salonName.split(" ")[0].toUpperCase()}
                 </span>
                 <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#BFA06A] to-transparent" />
-                <span className="font-jost text-xs tracking-[0.35em] text-[rgba(212,180,131,0.6)] uppercase">
+                <span className="font-marcellus text-sm tracking-[0.35em] text-[rgba(212,180,131,0.6)] uppercase">
                   Salon &amp; Academy
                 </span>
               </div>
