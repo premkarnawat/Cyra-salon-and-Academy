@@ -69,7 +69,7 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
                     <div className="font-cormorant text-lg text-[var(--dark-900)] dark:text-[#F0E8D8] mb-1">
                       {offer.name}
                     </div>
-                    <div className="font-jost text-3xl font-black text-[#F5EFE4] dark:text-[#E8D5B0] leading-none mb-1"
+                    <div className="font-jost text-3xl font-black text-[#F5EFE4] dark:text-[#E8D5B0] leading-none mb-1">
                       {offer.discount_text}
                     </div>
                     {offer.description && (
