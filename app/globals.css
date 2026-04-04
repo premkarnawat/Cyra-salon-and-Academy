@@ -12,8 +12,8 @@
     --gold-light:    #D4B483;
     --gold-dark:     #8C6E30;
     --gold-pale:     #F2E4C4;
-    --cream-50:      #FDFAF4;
-    --cream-100:     #FAF6EF;
+    --cream-50:      #FFFFFF;
+    --cream-100:     #F8F9FB;
     --cream-200:     #F5EDE0;
     --cream-300:     #EDE0C8;
     --dark-900:      #0C0B09;
@@ -35,7 +35,7 @@
 
   body {
     font-family: 'Jost', sans-serif;
-    background-color: var(--cream-50);
+    background-color: #FFFFFF;
     color: #111827;
     transition: background-color 0.4s ease, color 0.4s ease;
     overflow-x: hidden;
@@ -121,7 +121,7 @@
   /* ── Gold Button ── */
   .btn-gold {
     background: linear-gradient(135deg, #8C6E30 0%, #BFA06A 50%, #D4B483 100%);
-    color: #0C0B09;
+    color: #FFFFFF;
     font-family: 'Jost', sans-serif;
     font-weight: 700;
     letter-spacing: 0.15em;
@@ -160,7 +160,7 @@
   }
   .btn-ghost-gold:hover {
     background: var(--gold);
-    color: #0C0B09;
+    color: #FFFFFF;
     border-color: var(--gold);
   }
 
