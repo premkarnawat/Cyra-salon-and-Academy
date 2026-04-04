@@ -70,7 +70,6 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
                       {offer.name}
                     </div>
                     <div className="font-jost text-3xl font-black text-[#F5EFE4] dark:text-[#E8D5B0] leading-none mb-1"
-                      style={{ WebkitTextStroke: "1px rgba(191,160,106,0.6)" }}>
                       {offer.discount_text}
                     </div>
                     {offer.description && (
