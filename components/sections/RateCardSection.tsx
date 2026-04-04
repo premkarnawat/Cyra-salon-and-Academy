@@ -1,237 +1,262 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, ZoomIn, FileText } from "lucide-react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations/FadeIn";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { FileText, BookOpen } from "lucide-react";
+import { FadeIn } from "@/components/animations/FadeIn";
 import type { RateCard } from "@/types";
 
-// ─── PDF on cards: blocked (no open/download)
-// ─── PDF in lightbox: SCROLLABLE — user can scroll through all pages
-// The key difference: card has pointer-events:none + overlay blocker,
-// lightbox iframe has pointer-events:auto + overflow:auto
-
-// ── Card PDF preview — locked, first-page only ────────────────────────────────
-function CardPdf({ url }: { url: string }) {
-  const clean = url.split("#")[0];
-  const src   = `${clean}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH&zoom=page-fit`;
-  return (
-    <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>
-      {/* Blocker overlay — prevents any click/open on card */}
-      <div className="absolute inset-0 z-10 cursor-default" aria-hidden="true" />
-      <object
-        data={src}
-        type="application/pdf"
-        className="w-full h-full border-0 select-none"
-        style={{ pointerEvents: "none", display: "block" }}
-        aria-label="Rate card preview"
-      >
-        <div className="flex flex-col items-center justify-center h-full gap-3 bg-[var(--cream-200)] dark:bg-[var(--dark-700)]">
-          <FileText size={32} className="text-[var(--gold)] opacity-50" />
-          <span className="font-jost text-xs text-[var(--gold)] font-semibold tracking-widest uppercase">PDF</span>
-        </div>
-      </object>
-    </div>
-  );
+// ─── Separate images from PDFs ────────────────────────────────────────────────
+function partition(cards: RateCard[]) {
+  const images = cards.filter(c => c.file_type === "image");
+  const pdfs   = cards.filter(c => c.file_type === "pdf");
+  return { images, pdfs };
 }
 
-// ── Lightbox PDF — FULLY SCROLLABLE, all pages visible ───────────────────────
-function LightboxPdf({ url }: { url: string }) {
-  const clean = url.split("#")[0];
-  // toolbar=0 hides toolbar but scrollbar=1 keeps scroll, height=100% shows all pages
-  const src = `${clean}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+// ─── PDF Poster Card — scrollable, no download ───────────────────────────────
+function PdfPosterCard({ card }: { card: RateCard }) {
+  const clean = card.file_url.split("#")[0];
+  const src   = `${clean}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+
   return (
-    <div className="w-full h-full" style={{ minHeight: "60vh" }}>
-      <iframe
-        src={src}
-        className="w-full h-full border-0"
-        style={{
-          display: "block",
-          minHeight: "60vh",
-          // Allow pointer events so user can scroll
-          pointerEvents: "auto",
-          overflow: "auto",
-        }}
-        title="Rate card PDF"
-        sandbox="allow-scripts allow-same-origin"
-      />
-    </div>
-  );
-}
+    <div className="bg-white rounded-3xl border border-[rgba(191,160,106,0.2)] shadow-[0_8px_40px_rgba(0,0,0,0.08)] overflow-hidden">
+      {/* Header strip */}
+      <div className="h-[3px] bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
 
-// ── Lightbox ──────────────────────────────────────────────────────────────────
-function Lightbox({ card, onClose }: { card: RateCard; onClose: () => void }) {
-  return (
-    <motion.div
-      className="fixed inset-0 z-[9500] flex items-center justify-center p-3 md:p-8"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0" style={{
-        background: "rgba(8,7,5,0.92)",
-        backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-      }} />
-
-      {/* Modal box */}
-      <motion.div
-        className="relative z-10 w-full bg-white dark:bg-[var(--dark-700)] rounded-3xl shadow-[0_48px_120px_rgba(0,0,0,0.6)] flex flex-col"
-        style={{ maxWidth: "min(760px,94vw)", maxHeight: "92vh" }}
-        initial={{ scale: 0.88, opacity: 0, y: 28 }}
-        animate={{ scale: 1,    opacity: 1, y: 0  }}
-        exit={{    scale: 0.93, opacity: 0, y: 16 }}
-        transition={{ duration: 0.4, ease: [0.175, 0.885, 0.32, 1.275] }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Gold bar */}
-        <div className="h-[3px] rounded-t-3xl bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)] flex-shrink-0" />
-
-        {/* Close button */}
-        <button onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/25 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
-          aria-label="Close">
-          <X size={16} strokeWidth={2} />
-        </button>
-
-        {/* Media — scrollable container */}
-        <div className="flex-1 overflow-hidden rounded-b-3xl bg-[#F9FAFB] dark:bg-[var(--dark-600)]"
-          style={{ minHeight: "50vh" }}>
-          {card.file_type === "pdf" ? (
-            // ✅ PDF is scrollable here — no blocker overlay
-            <LightboxPdf url={card.file_url} />
-          ) : (
-            <div className="relative w-full h-full" style={{ minHeight: "50vh" }}>
-              <Image
-                src={card.file_url}
-                alt={card.title || "Rate card"}
-                fill className="object-contain p-3"
-                unoptimized draggable={false}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Caption */}
-        {card.title && (
-          <div className="px-6 py-3.5 border-t border-[rgba(191,160,106,0.12)] flex-shrink-0">
-            <p className="font-cormorant text-lg text-[#1C1710] dark:text-[#F0E8D8] text-center">{card.title}</p>
+      <div className="p-4">
+        {/* Label row */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-7 h-7 rounded-lg bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.2)] flex items-center justify-center flex-shrink-0">
+            <FileText size={13} className="text-[var(--gold-dark)]" />
           </div>
-        )}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ── Rate Card Poster (grid card) ──────────────────────────────────────────────
-function RateCardPoster({ card, onOpen }: { card: RateCard; onOpen: () => void }) {
-  return (
-    <motion.div
-      className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-[var(--dark-600)] border border-[rgba(191,160,106,0.15)] shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_48px_rgba(191,160,106,0.2)] hover:-translate-y-2 transition-all duration-400"
-      onClick={onOpen}
-      whileHover={{ scale: 1.015 }}
-      whileTap={{ scale: 0.975 }}
-    >
-      {/* Visual area — 3:4 poster ratio */}
-      <div className="relative overflow-hidden bg-[var(--cream-100)] dark:bg-[var(--dark-700)]"
-        style={{ aspectRatio: "3/4" }}
-        onContextMenu={e => e.preventDefault()}>
-
-        {card.file_type === "pdf" ? (
-          <CardPdf url={card.file_url} />
-        ) : (
-          <>
-            <Image src={card.file_url} alt={card.title || "Rate card"} fill
-              className="object-contain group-hover:scale-[1.03] transition-transform duration-500"
-              sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw"
-              unoptimized draggable={false} onContextMenu={e => e.preventDefault()} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-350" />
-          </>
-        )}
-
-        {/* File type badge */}
-        <div className="absolute top-2.5 right-2.5 z-20 px-2 py-0.5 rounded-lg bg-white/85 dark:bg-black/55 backdrop-blur-sm border border-[rgba(191,160,106,0.2)] flex items-center gap-1">
-          {card.file_type === "pdf"
-            ? <FileText size={9} className="text-[var(--gold-dark)]" />
-            : <span className="text-[7px] text-[var(--gold-dark)]">IMG</span>}
-          <span className="font-jost text-[8px] tracking-[0.12em] uppercase text-[var(--gold-dark)] dark:text-[var(--gold-light)] font-semibold">
-            {card.file_type.toUpperCase()}
+          <span className="font-jost text-xs font-semibold text-[#374151] tracking-wide">
+            {card.title || "Rate Card"}
           </span>
         </div>
 
-        {/* Zoom hint */}
-        <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-11 h-11 rounded-full bg-white/90 dark:bg-black/65 backdrop-blur-sm shadow-lg flex items-center justify-center">
-            <ZoomIn size={17} className="text-[var(--gold-dark)]" strokeWidth={1.8} />
-          </div>
+        {/* PDF embed — scrollable, no interaction to open/download */}
+        <div className="relative rounded-2xl overflow-hidden bg-[#F8F9FB] border border-[rgba(191,160,106,0.12)]"
+          style={{ height: "clamp(400px, 65vh, 680px)" }}>
+          <iframe
+            src={src}
+            className="w-full h-full border-0"
+            style={{ display:"block", pointerEvents:"auto" }}
+            title={card.title || "Rate card"}
+            sandbox="allow-scripts allow-same-origin"
+          />
+          {/* Thin overlay on top-right to block the PDF toolbar/header area */}
+          <div className="absolute top-0 left-0 right-0 h-8 z-10 pointer-events-none" />
         </div>
       </div>
-
-      {/* Caption */}
-      {card.title && (
-        <div className="px-4 py-3 border-t border-[rgba(191,160,106,0.1)]">
-          <p className="font-cormorant text-[1rem] leading-snug text-[#1C1710] dark:text-[#F0E8D8] group-hover:text-[var(--gold-dark)] dark:group-hover:text-[var(--gold-light)] transition-colors text-center">
-            {card.title}
-          </p>
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ── Empty state ───────────────────────────────────────────────────────────────
-function EmptyState() {
-  return (
-    <div className="col-span-full flex flex-col items-center py-24 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[rgba(191,160,106,0.08)] border border-[rgba(191,160,106,0.15)] flex items-center justify-center mb-4">
-        <FileText size={26} className="text-[var(--gold)] opacity-40" />
-      </div>
-      <p className="font-cormorant text-xl text-[#3D3527] dark:text-[rgba(240,232,216,0.5)]">Rate cards coming soon</p>
-      <p className="font-jost text-xs text-[#8C7A5E]/50 tracking-wide mt-1">Visit again soon or contact us directly</p>
     </div>
   );
 }
 
-// ── Main section ──────────────────────────────────────────────────────────────
-export function RateCardSection({ rateCards }: { rateCards: RateCard[] }) {
-  const [lightboxCard, setLightboxCard] = useState<RateCard | null>(null);
+// ─── Spiral Book Component ────────────────────────────────────────────────────
+// Images only. First image = cover. Swipe left/right to turn pages.
+function SpiralBook({ images }: { images: RateCard[] }) {
+  const [page,    setPage]    = useState(0);
+  const [dir,     setDir]     = useState(0);  // -1 prev, 1 next
+  const total = images.length;
+
+  // Touch/drag state
+  const dragX      = useMotionValue(0);
+  const SWIPE_MIN  = 50;
+
+  function goTo(nextPage: number) {
+    if (nextPage < 0 || nextPage >= total) return;
+    setDir(nextPage > page ? 1 : -1);
+    setPage(nextPage);
+  }
+
+  // Drag handlers
+  const onDragEnd = useCallback((_: unknown, info: { offset: { x: number } }) => {
+    const dx = info.offset.x;
+    if (dx < -SWIPE_MIN && page < total - 1) goTo(page + 1);
+    else if (dx > SWIPE_MIN && page > 0)     goTo(page - 1);
+    animate(dragX, 0, { duration: 0.3 });
+  }, [page, total]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") goTo(page + 1);
+      if (e.key === "ArrowLeft")  goTo(page - 1);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [page]);
+
+  if (total === 0) return null;
+
+  const isCover = page === 0;
+
+  const variants = {
+    enter: (d: number) => ({ x: d > 0 ? "60%" : "-60%", opacity: 0, scale: 0.94, rotateY: d > 0 ? 8 : -8 }),
+    center: { x: 0, opacity: 1, scale: 1, rotateY: 0, transition: { duration: 0.45, ease: [0.4,0,0.2,1] } },
+    exit:  (d: number) => ({ x: d > 0 ? "-60%" : "60%", opacity: 0, scale: 0.94, rotateY: d > 0 ? -8 : 8, transition: { duration: 0.35 } }),
+  };
 
   return (
-    <>
-      <section id="services" className="py-20 md:py-28 bg-[var(--cream-100)] dark:bg-[var(--dark-800)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <FadeIn>
-            <SectionHeader
-              tag="✂️ Services & Rates"
-              title={<>Our <em className="text-[var(--gold-light)] not-italic font-normal">Rate Cards</em></>}
-              subtitle="Tap any card to view full size — scroll through multi-page PDFs"
-            />
-          </FadeIn>
-
-          {rateCards.length === 0 ? (
-            <FadeIn><div className="grid grid-cols-1"><EmptyState /></div></FadeIn>
-          ) : (
-            <StaggerContainer
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6"
-              staggerDelay={0.08}
-            >
-              {rateCards.map(card => (
-                <StaggerItem key={card.id}>
-                  <RateCardPoster card={card} onOpen={() => setLightboxCard(card)} />
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          )}
+    <div className="w-full max-w-lg mx-auto select-none" style={{ perspective: "1200px" }}>
+      {/* Book wrapper */}
+      <div className="relative">
+        {/* Spiral binding decoration */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-20 flex items-center gap-[11px]">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div key={i} className="w-4 h-4 rounded-full border-[2.5px] border-[var(--gold)] bg-white shadow-[0_1px_4px_rgba(191,160,106,0.25)]" />
+          ))}
         </div>
-      </section>
 
-      <AnimatePresence>
-        {lightboxCard && (
-          <Lightbox card={lightboxCard} onClose={() => setLightboxCard(null)} />
+        {/* Page */}
+        <div className="rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-[rgba(191,160,106,0.18)]">
+          <AnimatePresence initial={false} custom={dir} mode="wait">
+            <motion.div
+              key={page}
+              custom={dir}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={onDragEnd}
+              style={{ x: dragX, cursor: "grab" }}
+              whileDrag={{ cursor: "grabbing" }}
+              className="relative bg-white"
+              style={{ aspectRatio: "3/4" }}
+            >
+              {/* Cover badge */}
+              {isCover && (
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--gold)] shadow-md">
+                  <BookOpen size={11} className="text-white" />
+                  <span className="font-jost text-[9px] font-bold text-white tracking-[0.15em] uppercase">Cover</span>
+                </div>
+              )}
+
+              <Image
+                src={images[page].file_url}
+                alt={images[page].title || `Page ${page + 1}`}
+                fill
+                className="object-contain"
+                sizes="(max-width:640px) 95vw, 500px"
+                unoptimized
+                draggable={false}
+                priority={page === 0}
+              />
+
+              {/* Page number */}
+              <div className="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                <span className="font-jost text-[10px] text-white/80 tracking-wide">
+                  {page + 1} / {total}
+                </span>
+              </div>
+
+              {/* Title if exists */}
+              {images[page].title && (
+                <div className="absolute bottom-3 left-3 z-10">
+                  <span className="font-cormorant text-sm text-white drop-shadow">{images[page].title}</span>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Page shadow stack for depth effect */}
+        {page < total - 1 && (
+          <>
+            <div className="absolute inset-x-3 -bottom-1.5 h-full rounded-2xl bg-[#F0E8D8] border border-[rgba(191,160,106,0.15)] -z-10 shadow-sm" />
+            <div className="absolute inset-x-5 -bottom-3 h-full rounded-2xl bg-[#EDE0C8] border border-[rgba(191,160,106,0.1)] -z-20" />
+          </>
         )}
-      </AnimatePresence>
-    </>
+      </div>
+
+      {/* Swipe hint / dots */}
+      <div className="mt-8 flex flex-col items-center gap-3">
+        {/* Dots */}
+        <div className="flex items-center gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className={`rounded-full transition-all duration-300 ${
+                i === page ? "w-6 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-[rgba(191,160,106,0.3)] hover:bg-[rgba(191,160,106,0.6)]"
+              }`}
+              aria-label={`Go to page ${i + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Swipe hint — only show on first visit */}
+        {total > 1 && (
+          <div className="flex items-center gap-2 text-[11px] text-[#9CA3AF] font-jost">
+            <span>←</span>
+            <span>Swipe or drag to turn pages</span>
+            <span>→</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center py-20 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-[rgba(191,160,106,0.08)] border border-[rgba(191,160,106,0.15)] flex items-center justify-center mb-4">
+        <BookOpen size={24} className="text-[var(--gold)] opacity-50" />
+      </div>
+      <p className="font-cormorant text-xl text-[#374151]">Rate cards coming soon</p>
+      <p className="font-jost text-xs text-[#9CA3AF] mt-1">Visit again soon or contact us directly</p>
+    </div>
+  );
+}
+
+// ─── Main Section ─────────────────────────────────────────────────────────────
+export function RateCardSection({ rateCards }: { rateCards: RateCard[] }) {
+  const { images, pdfs } = partition(rateCards);
+  const hasContent = images.length > 0 || pdfs.length > 0;
+
+  return (
+    <section id="services" className="py-20 md:py-28 bg-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+
+        {/* ── No "Services" heading, no "Rate" text — visual only ── */}
+        {/* Section tag only — minimal label */}
+        <FadeIn>
+          <div className="text-center mb-12">
+            <span className="section-tag">✂️ Rate Cards</span>
+            <div className="gold-divider" />
+          </div>
+        </FadeIn>
+
+        {!hasContent ? (
+          <EmptyState />
+        ) : (
+          <div className="space-y-16">
+            {/* ── BOOK: image rate cards ── */}
+            {images.length > 0 && (
+              <FadeIn>
+                <SpiralBook images={images} />
+              </FadeIn>
+            )}
+
+            {/* ── PDF POSTERS: one card each ── */}
+            {pdfs.length > 0 && (
+              <FadeIn>
+                <div className={`grid gap-6 ${pdfs.length === 1 ? "max-w-lg mx-auto" : "grid-cols-1 md:grid-cols-2"}`}>
+                  {pdfs.map(card => (
+                    <PdfPosterCard key={card.id} card={card} />
+                  ))}
+                </div>
+              </FadeIn>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
