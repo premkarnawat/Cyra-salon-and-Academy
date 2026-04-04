@@ -45,7 +45,7 @@ export function OpeningScreen({
           >
             <Image
               src={bgUrl}
-              alt="Cyra Salon"
+              alt=""
               fill
               className="object-cover"
               priority
