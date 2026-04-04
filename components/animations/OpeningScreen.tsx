@@ -15,7 +15,7 @@ interface OpeningScreenProps {
 export function OpeningScreen({
   bgUrl = DEFAULT_CONFIG.opening_bg_url,
   logoUrl,
-  salonName = "Cyra",
+  salonName = "",
   onComplete,
 }: OpeningScreenProps) {
   const [phase, setPhase] = useState<"in" | "hold" | "out">("in");
