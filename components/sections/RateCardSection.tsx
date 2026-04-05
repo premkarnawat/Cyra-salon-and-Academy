@@ -14,9 +14,10 @@ function partition(cards: RateCard[]) {
   };
 }
 
-// ── PDF Poster — scrollable iframe, no new tab ────────────────────────────────
+// ── PDF Poster — FIXED (scroll + no block + faster) ───────────────────────────
 function PdfPoster({ card }: { card: RateCard }) {
-  const src = `${card.file_url.split("#")[0]}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+  const src = `${card.file_url.split("#")[0]}#toolbar=0&navpanes=0`;
+
   return (
     <div className="bg-white rounded-3xl border border-[rgba(191,160,106,0.18)] shadow-[0_8px_40px_rgba(0,0,0,0.07)] overflow-hidden">
       <div className="h-[3px] bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
@@ -27,17 +28,18 @@ function PdfPoster({ card }: { card: RateCard }) {
             <span className="font-jost text-sm font-semibold text-[#374151] tracking-wide">{card.title}</span>
           </div>
         )}
-        {/* Scrollable PDF — no download, no new tab */}
+
+        {/* FIX: better height + lazy load */}
         <div
           className="rounded-2xl overflow-hidden border border-[rgba(191,160,106,0.1)] bg-[#F8F9FB]"
-          style={{ height: "clamp(380px, 60vh, 650px)" }}
+          style={{ height: "75vh" }}
         >
           <iframe
             src={src}
             className="w-full h-full border-0"
-            style={{ display: "block", pointerEvents: "auto" }}
+            loading="lazy"
+            style={{ display: "block" }}
             title={card.title || "Rate card"}
-            sandbox="allow-scripts allow-same-origin"
           />
         </div>
       </div>
@@ -85,6 +87,7 @@ function SpiralBook({ images }: { images: RateCard[] }) {
   return (
     <div className="w-full max-w-md mx-auto select-none">
       <div className="relative">
+
         {/* Spiral holes */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-[22px] z-20 flex items-center gap-[10px] pointer-events-none">
           {Array.from({ length: 13 }).map((_, i) => (
@@ -93,57 +96,58 @@ function SpiralBook({ images }: { images: RateCard[] }) {
         </div>
 
         {/* Book page */}
-        <div className="rounded-2xl overflow-hidden shadow-[0_20px_56px_rgba(0,0,0,0.13)] border border-[rgba(191,160,106,0.18)]">
+        <div className="rounded-2xl overflow-hidden shadow-[0_20px_56px_rgba(0,0,0,0.13)] border border-[rgba(191,160,106,0.18)] bg-white">
           <AnimatePresence initial={false} custom={dir} mode="wait">
             <motion.div
               key={page}
               custom={dir}
               variants={variants}
-              initial="enter" animate="center" exit="exit"
+              initial="enter"
+              animate="center"
+              exit="exit"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.13}
               onDragEnd={onDragEnd}
-              style={{ x: dragX, cursor: "grab", aspectRatio: "3/4", position: "relative", background: "#fff" }}
+              style={{ x: dragX }}
               whileDrag={{ cursor: "grabbing" }}
+              className="relative w-full aspect-[3/4] flex items-center justify-center p-6"
             >
-              {/* Cover badge */}
-              {page === 0 && (
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--gold)] shadow-md">
-                  <BookOpen size={10} className="text-white" />
-                  <span className="font-jost text-[8.5px] font-bold text-white tracking-[0.15em] uppercase">Cover</span>
-                </div>
-              )}
+              {/* INNER PAGE FIX (IMPORTANT) */}
+              <div className="relative w-full h-full bg-white rounded-md overflow-hidden shadow-inner">
 
-              {/* Image — object-contain, no cropping, no overflow */}
-              <Image
-                src={images[page].file_url}
-                alt={images[page].title || `Page ${page + 1}`}
-                fill
-                className="object-contain"
-                style={{ padding: "8px" }}
-                sizes="(max-width:640px) 95vw, 448px"
-                unoptimized
-                draggable={false}
-                priority={page === 0}
-              />
+                <Image
+                  src={images[page].file_url}
+                  alt={images[page].title || `Page ${page + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width:640px) 95vw, 448px"
+                  draggable={false}
+                  priority={page === 0}
+                />
+
+              </div>
 
               {/* Page number */}
               <div className="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/25 backdrop-blur-sm">
-                <span className="font-jost text-[10px] text-white/85 tracking-wide">{page + 1} / {total}</span>
+                <span className="font-jost text-[10px] text-white/85 tracking-wide">
+                  {page + 1} / {total}
+                </span>
               </div>
 
               {/* Title */}
               {images[page].title && (
                 <div className="absolute bottom-3 left-3 z-10">
-                  <span className="font-cormorant text-sm text-white drop-shadow">{images[page].title}</span>
+                  <span className="font-cormorant text-sm text-white drop-shadow">
+                    {images[page].title}
+                  </span>
                 </div>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Stacked pages for depth */}
+        {/* Stacked pages */}
         {page < total - 1 && (
           <>
             <div className="absolute inset-x-3 -bottom-1.5 h-full rounded-2xl bg-[#EDE8DF] border border-[rgba(191,160,106,0.13)] -z-10" />
@@ -159,16 +163,14 @@ function SpiralBook({ images }: { images: RateCard[] }) {
             <button
               key={i}
               onClick={() => goTo(i, i > page ? 1 : -1)}
-              aria-label={`Page ${i + 1}`}
               className={`rounded-full transition-all duration-300 ${
-                i === page ? "w-7 h-2.5 bg-[var(--gold)]" : "w-2.5 h-2.5 bg-[rgba(191,160,106,0.28)] hover:bg-[rgba(191,160,106,0.55)]"
+                i === page
+                  ? "w-7 h-2.5 bg-[var(--gold)]"
+                  : "w-2.5 h-2.5 bg-[rgba(191,160,106,0.28)]"
               }`}
             />
           ))}
         </div>
-        {total > 1 && (
-          <p className="font-jost text-[11px] text-[#9CA3AF]">← Swipe or drag to turn pages →</p>
-        )}
       </div>
     </div>
   );
@@ -195,15 +197,11 @@ export function RateCardSection({ rateCards }: { rateCards: RateCard[] }) {
     <section id="services" className="py-16 md:py-24 bg-[#F8F9FB]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
-        {/* BIG Cinzel heading — Issue #2 */}
         <FadeIn>
           <div className="text-center mb-14">
-            <h2
-              className="font-cinzel text-[clamp(2.2rem,6vw,4rem)] text-[#1F2937] tracking-[0.18em] leading-tight"
-            >
+            <h2 className="font-cinzel text-[clamp(2.2rem,6vw,4rem)] text-[#1F2937] tracking-[0.18em]">
               Rate Cards
             </h2>
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mt-4" />
           </div>
         </FadeIn>
 
@@ -211,21 +209,21 @@ export function RateCardSection({ rateCards }: { rateCards: RateCard[] }) {
           <Empty />
         ) : (
           <div className="space-y-14">
-            {/* Images → Spiral Book */}
+
             {images.length > 0 && (
               <FadeIn>
                 <SpiralBook images={images} />
               </FadeIn>
             )}
 
-            {/* PDFs → Scrollable poster cards */}
             {pdfs.length > 0 && (
               <FadeIn>
-                <div className={`grid gap-6 ${pdfs.length === 1 ? "max-w-lg mx-auto" : "grid-cols-1 md:grid-cols-2"}`}>
+                <div className="grid gap-6">
                   {pdfs.map(card => <PdfPoster key={card.id} card={card} />)}
                 </div>
               </FadeIn>
             )}
+
           </div>
         )}
       </div>
