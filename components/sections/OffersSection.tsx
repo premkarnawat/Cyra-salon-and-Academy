@@ -6,20 +6,16 @@ import { MessageCircle } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
-import type { Offer } from "@/types";
 
-/* ── FALLBACK ── */
-const FALLBACK: Offer[] = [
+/* ── FALLBACK (SAFE DATA) ── */
+const FALLBACK = [
   {
     id: "o1",
     tag: "Best Seller",
     name: "Keratin Treatment",
     discount_text: "30% OFF",
-    description: "Silky smooth hair",
+    description: "Silky smooth, frizz-free hair",
     image_url: "https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=700&q=65",
-    is_active: true,
-    sort_order: 1,
-    created_at: "",
   },
   {
     id: "o2",
@@ -28,60 +24,56 @@ const FALLBACK: Offer[] = [
     discount_text: "25% OFF",
     description: "Professional colouring",
     image_url: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=700&q=65",
-    is_active: true,
-    sort_order: 2,
-    created_at: "",
   },
 ];
 
 const AUTO_MS = 5000;
-const SWIPE = 70;
+const SWIPE_THRESHOLD = 70;
 
-export function OffersSection({ offers }: { offers?: Offer[] }) {
-  /* ✅ SAFE DATA */
-  const safeOffers = Array.isArray(offers) ? offers : [];
-  const list = safeOffers.length ? safeOffers : FALLBACK;
+export function OffersSection({ offers }: any) {
+  /* ✅ SAFE DATA HANDLING */
+  const list = Array.isArray(offers) && offers.length ? offers : FALLBACK;
 
   const [cur, setCur] = useState(0);
 
-  /* ✅ SAFE TIMER (NO NodeJS TYPE) */
+  /* ✅ SAFE TIMER (NO NODE TYPE) */
   const timer = useRef<any>(null);
 
-  /* AUTO SLIDE */
   useEffect(() => {
     if (timer.current) clearInterval(timer.current);
 
     timer.current = setInterval(() => {
-      setCur((c) => (c + 1) % list.length);
+      setCur((c: number) => (c + 1) % list.length);
     }, AUTO_MS);
 
     return () => clearInterval(timer.current);
   }, [list.length]);
 
-  /* ✅ TOUCH SWIPE (NO TYPES = NO ERROR) */
+  /* ✅ SIMPLE TOUCH SWIPE (NO TS ERRORS) */
   let startX = 0;
 
-  const onTouchStart = (e: any) => {
+  const handleTouchStart = (e: any) => {
     startX = e.touches[0].clientX;
   };
 
-  const onTouchEnd = (e: any) => {
+  const handleTouchEnd = (e: any) => {
     const endX = e.changedTouches[0].clientX;
     const diff = startX - endX;
 
-    if (diff > SWIPE) {
-      setCur((c) => (c + 1) % list.length);
-    } else if (diff < -SWIPE) {
-      setCur((c) => (c - 1 + list.length) % list.length);
+    if (diff > SWIPE_THRESHOLD) {
+      setCur((c: number) => (c + 1) % list.length);
+    } else if (diff < -SWIPE_THRESHOLD) {
+      setCur((c: number) => (c - 1 + list.length) % list.length);
     }
   };
 
   const offer = list[cur] || FALLBACK[0];
 
   return (
-    <section className="py-20 bg-[#F8F9FB]">
+    <section id="offers" className="py-20 bg-[#F8F9FB]">
       <div className="max-w-3xl mx-auto px-4">
 
+        {/* HEADER */}
         <FadeIn>
           <SectionHeader
             tag="✦ Hot Deals"
@@ -100,8 +92,8 @@ export function OffersSection({ offers }: { offers?: Offer[] }) {
         {/* CARD */}
         <div
           className="bg-white rounded-3xl overflow-hidden shadow-lg"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
 
           {/* IMAGE */}
@@ -116,7 +108,7 @@ export function OffersSection({ offers }: { offers?: Offer[] }) {
             />
 
             {offer.tag && (
-              <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-xs">
+              <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-xs font-semibold">
                 {offer.tag}
               </div>
             )}
@@ -137,7 +129,8 @@ export function OffersSection({ offers }: { offers?: Offer[] }) {
             <a
               href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer.name))}
               target="_blank"
-              className="btn-gold px-6 py-3 rounded-xl inline-flex gap-2"
+              rel="noreferrer"
+              className="btn-gold px-6 py-3 rounded-xl inline-flex items-center gap-2"
             >
               <MessageCircle size={14} />
               Book Now
@@ -147,7 +140,7 @@ export function OffersSection({ offers }: { offers?: Offer[] }) {
 
         {/* DOTS */}
         <div className="flex justify-center mt-4 gap-2">
-          {list.map((_, i) => (
+          {list.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => setCur(i)}
