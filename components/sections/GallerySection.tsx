@@ -36,9 +36,15 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
     }, AUTO_MS);
   }, [total]);
 
+  // ✅ FIXED useEffect (no TypeScript error)
   useEffect(() => {
     resetTimer();
-    return () => timer.current && clearInterval(timer.current);
+
+    return () => {
+      if (timer.current) {
+        clearInterval(timer.current);
+      }
+    };
   }, [resetTimer]);
 
   function goTo(next: number, direction: number) {
@@ -76,7 +82,7 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
         {/* 🔥 MAIN CARD */}
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          {/* ✅ AUTO FIT IMAGE (SAME AS PACKAGES) */}
+          {/* ✅ AUTO FIT IMAGE (same as packages) */}
           <div className="relative w-full aspect-[4/3] overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -115,20 +121,20 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
                   />
                 )}
 
-                {/* 🔥 PREMIUM OVERLAY */}
+                {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-                {/* TITLE */}
+                {/* Title */}
                 <div className="absolute bottom-5 left-5 text-white">
                   <p className="text-xl font-cormorant tracking-wide">{item.title}</p>
                 </div>
 
-                {/* COUNTER */}
+                {/* Counter */}
                 <div className="absolute bottom-5 right-5 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
                   {cur + 1}/{total}
                 </div>
 
-                {/* PLAY ICON */}
+                {/* Play icon */}
                 {item.media_type === "video" && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play size={42} className="text-white" />
@@ -139,7 +145,7 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
             </AnimatePresence>
           </div>
 
-          {/* 🔥 PROGRESS BAR */}
+          {/* Progress bar */}
           <div className="h-[3px] bg-gray-200">
             <motion.div
               key={cur}
@@ -153,7 +159,7 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
 
         </div>
 
-        {/* DOTS */}
+        {/* Dots */}
         <div className="mt-5 flex justify-center gap-2">
           {list.map((_, i) => (
             <button
