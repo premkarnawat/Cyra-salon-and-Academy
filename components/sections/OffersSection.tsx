@@ -10,7 +10,7 @@ import { FadeIn } from "@/components/animations/FadeIn";
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
 import type { Offer } from "@/types";
 
-/* ── FALLBACK DATA ── */
+/* ── FALLBACK ── */
 const FALLBACK: Offer[] = [
   {
     id: "o1",
@@ -47,16 +47,12 @@ const FALLBACK: Offer[] = [
   },
 ];
 
-const SWIPE_MIN = 44;
 const AUTO_MS = 6000;
+const SWIPE_THRESHOLD = 80; // 🔥 stronger swipe detection
 
-/* ── MAIN COMPONENT ── */
 export function OffersSection(props: { offers?: Offer[] }) {
   const offers = props.offers ?? [];
-
-  const list =
-    Array.isArray(offers) && offers.length ? offers : FALLBACK;
-
+  const list = Array.isArray(offers) && offers.length ? offers : FALLBACK;
   const total = list.length;
 
   const [cur, setCur] = useState(0);
@@ -68,7 +64,6 @@ export function OffersSection(props: { offers?: Offer[] }) {
   /* ── AUTO SLIDE ── */
   const resetTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
-
     timer.current = setInterval(() => {
       setDir(1);
       setCur((c) => (c + 1) % total);
@@ -77,30 +72,45 @@ export function OffersSection(props: { offers?: Offer[] }) {
 
   useEffect(() => {
     resetTimer();
-
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
   }, [resetTimer]);
 
   /* ── NAVIGATION ── */
-  function goTo(next: number, d: number) {
-    setDir(d);
+  function goTo(next: number, direction: number) {
+    setDir(direction);
     setCur((next + total) % total);
     resetTimer();
   }
 
+  /* ── 🔥 REAL SWIPE LOGIC ── */
   function onDragEnd(_: any, info: any) {
-    if (info.offset.x < -SWIPE_MIN) goTo(cur + 1, 1);
-    else if (info.offset.x > SWIPE_MIN) goTo(cur - 1, -1);
-    animate(dragX, 0, { duration: 0.2 });
+    const offset = info.offset.x;
+
+    if (offset < -SWIPE_THRESHOLD) {
+      goTo(cur + 1, 1);
+    } else if (offset > SWIPE_THRESHOLD) {
+      goTo(cur - 1, -1);
+    } else {
+      animate(dragX, 0, { duration: 0.25 });
+    }
   }
 
-  /* ── FAST ANIMATION ── */
   const variants = {
-    enter: (d: number) => ({ x: d > 0 ? 300 : -300, opacity: 0 }),
-    center: { x: 0, opacity: 1, transition: { duration: 0.3 } },
-    exit: (d: number) => ({ x: d > 0 ? -300 : 300, opacity: 0 }),
+    enter: (d: number) => ({
+      x: d > 0 ? 400 : -400,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.3 },
+    },
+    exit: (d: number) => ({
+      x: d > 0 ? -400 : 400,
+      opacity: 0,
+    }),
   };
 
   const offer = list[cur] || FALLBACK[0];
@@ -109,18 +119,10 @@ export function OffersSection(props: { offers?: Offer[] }) {
     <section id="offers" className="py-20 bg-[#F8F9FB]">
       <div className="max-w-3xl mx-auto px-4">
 
-        {/* HEADER */}
         <FadeIn>
           <SectionHeader
             tag="✦ Hot Deals"
-            title={
-              <>
-                Exclusive{" "}
-                <em className="text-[var(--gold-light)] not-italic font-normal">
-                  Offers
-                </em>
-              </>
-            }
+            title={<>Exclusive <em className="text-[var(--gold-light)] not-italic font-normal">Offers</em></>}
             subtitle="Swipe to explore · Limited time deals"
           />
         </FadeIn>
@@ -128,7 +130,7 @@ export function OffersSection(props: { offers?: Offer[] }) {
         {/* CARD */}
         <div className="rounded-3xl overflow-hidden bg-white shadow-lg border">
 
-          {/* IMAGE */}
+          {/* IMAGE + SWIPE */}
           <div className="relative w-full aspect-[4/3] overflow-hidden">
             <AnimatePresence initial={false} custom={dir} mode="wait">
               <motion.div
@@ -140,17 +142,14 @@ export function OffersSection(props: { offers?: Offer[] }) {
                 exit="exit"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15} // 🔥 smoother swipe
                 onDragEnd={onDragEnd}
                 style={{ x: dragX }}
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
               >
-
                 <Image
-                  src={
-                    offer?.image_url ||
-                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=700&q=65"
-                  }
-                  alt={offer?.name || "Offer"}
+                  src={offer?.image_url}
+                  alt={offer?.name}
                   fill
                   className="object-cover object-top"
                   sizes="100vw"
@@ -158,37 +157,30 @@ export function OffersSection(props: { offers?: Offer[] }) {
                   quality={70}
                 />
 
-                {/* TAG */}
                 {offer?.tag && (
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold shadow">
+                  <div className="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded-full text-xs font-semibold">
                     {offer.tag}
                   </div>
                 )}
-
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* CONTENT */}
           <div className="p-6">
-            <h3 className="text-xl text-gray-800 mb-2">
-              {offer?.name}
-            </h3>
+            <h3 className="text-xl text-gray-800 mb-2">{offer?.name}</h3>
 
             <p className="text-3xl font-bold text-[var(--gold)] mb-2">
               {offer?.discount_text}
             </p>
 
-            {offer?.description && (
-              <p className="text-sm text-gray-500 mb-4">
-                {offer.description}
-              </p>
-            )}
+            <p className="text-sm text-gray-500 mb-4">
+              {offer?.description}
+            </p>
 
             <a
-              href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer?.name || "Offer"))}
+              href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer?.name))}
               target="_blank"
-              rel="noreferrer"
               className="btn-gold inline-flex items-center gap-2 px-6 py-3 rounded-xl"
             >
               <MessageCircle size={14} />
@@ -203,16 +195,13 @@ export function OffersSection(props: { offers?: Offer[] }) {
             <button
               key={i}
               onClick={() => goTo(i, i > cur ? 1 : -1)}
-              className={`rounded-full transition-all ${
-                i === cur
-                  ? "w-6 h-2 bg-[var(--gold)]"
-                  : "w-2 h-2 bg-gray-300"
+              className={`rounded-full ${
+                i === cur ? "w-6 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
               }`}
             />
           ))}
         </div>
 
-        {/* SWIPE TEXT */}
         <p className="text-center mt-2 text-xs text-gray-400">
           ← Swipe to explore →
         </p>
