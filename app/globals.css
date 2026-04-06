@@ -119,37 +119,68 @@
   .card-gold-border:hover::before { opacity: 1; }
 
   /* ── Gold Button ── */
-  .btn-gold {
-  background: linear-gradient(135deg, #D4B483 0%, #F2E4C4 100%);
-  color: #0C0B09; /* pure black-ish text */
-  font-family: 'Jost', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
+  /* PURE GOLD PREMIUM BUTTON */
+.btn-gold {
   position: relative;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  background: #D4AF37; /* pure gold */
+  color: #000; /* black text */
+
+  border: none;
+  border-radius: 999px;
+
+  padding: 16px 42px;
+
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  cursor: pointer;
+
+  /* REMOVE ALL SHADOW / GRADIENT */
+  box-shadow: none;
+  background-image: none;
+  filter: none;
+
+  transition: transform 0.2s ease;
 }
 
-/* subtle luxury shine (optional but clean) */
-.btn-gold::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.5s ease;
-}
-
+/* HOVER SLIGHT LIFT */
 .btn-gold:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(191, 160, 106, 0.25);
 }
 
+/* CLICK PRESS EFFECT */
+.btn-gold:active {
+  transform: scale(0.97);
+}
+
+/* PREMIUM SHINE EFFECT */
+.btn-gold::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 50%;
+  height: 100%;
+
+  background: rgba(255, 255, 255, 0.35);
+  transform: skewX(-25deg);
+
+  transition: left 0.7s ease;
+}
+
+/* SHINE ON HOVER */
 .btn-gold:hover::after {
-  transform: translateX(100%);
+  left: 130%;
 }
 
   /* ── Ghost Button ── */
