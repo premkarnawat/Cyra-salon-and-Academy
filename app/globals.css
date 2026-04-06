@@ -125,7 +125,7 @@
   overflow: hidden;
 
   background: #D4AF37; /* pure gold */
-  color: #000; /* black text */
+  color: #000;
 
   border: none;
   border-radius: 999px;
@@ -145,25 +145,31 @@
 
   cursor: pointer;
 
-  /* REMOVE ALL SHADOW / GRADIENT */
-  box-shadow: none;
-  background-image: none;
-  filter: none;
+  /* ✨ SOFT GOLD GLOW */
+  box-shadow:
+    0 0 0px rgba(212, 175, 55, 0.0),
+    0 0 18px rgba(212, 175, 55, 0.35),
+    0 0 38px rgba(212, 175, 55, 0.25);
 
-  transition: transform 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-/* HOVER SLIGHT LIFT */
+/* 🔥 HOVER = STRONGER GLOW */
 .btn-gold:hover {
   transform: translateY(-2px);
+
+  box-shadow:
+    0 0 10px rgba(212, 175, 55, 0.6),
+    0 0 30px rgba(212, 175, 55, 0.55),
+    0 0 60px rgba(212, 175, 55, 0.45);
 }
 
-/* CLICK PRESS EFFECT */
+/* 👇 PRESS EFFECT */
 .btn-gold:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
-/* PREMIUM SHINE EFFECT */
+/* ✨ SHINE SWEEP */
 .btn-gold::after {
   content: "";
   position: absolute;
@@ -178,7 +184,6 @@
   transition: left 0.7s ease;
 }
 
-/* SHINE ON HOVER */
 .btn-gold:hover::after {
   left: 130%;
 }
