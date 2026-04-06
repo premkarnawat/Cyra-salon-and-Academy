@@ -37,15 +37,16 @@ export function PackagesSection({ packages }: { packages: Package[] }) {
 
                   {/* Image — object-cover, no overflow */}
                   {pkg.image_url && (
-                    <div className="relative overflow-hidden bg-[#EDE8E0]" style={{ height: "200px" }}>
+                    <div className="relative w-full aspect-[4/3] overflow-hidden">
                       <Image
                         src={pkg.image_url}
                         alt={pkg.name}
                         fill
-                        className="object-cover"
+                        className="object-cover object-center"
                         sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 400px"
                         unoptimized
                       />
+                    </div>
                       {/* Discount */}
                       <div className="absolute top-3 right-3 bg-[var(--gold)] text-white text-[10px] font-black px-3 py-1.5 rounded-full tracking-wide shadow-md">
                         {pkg.discount_percent}% OFF
