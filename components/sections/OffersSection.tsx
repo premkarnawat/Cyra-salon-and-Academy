@@ -37,9 +37,14 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
   }, [total]);
 
   useEffect(() => {
-    resetTimer();
-    return () => timerRef.current && clearInterval(timerRef.current);
-  }, [resetTimer]);
+  resetTimer();
+
+  return () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+  };
+}, [resetTimer]);
 
   function goTo(next: number, direction: number) {
     setDir(direction);
