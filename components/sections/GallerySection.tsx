@@ -77,13 +77,12 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           />
         </FadeIn>
 
-        {/* Carousel wrapper */}
         <div className="rounded-3xl overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.1)] border border-[rgba(191,160,106,0.12)] bg-[#F8F9FB] select-none">
 
-          {/* Slide area — taller on mobile */}
+          {/* FIXED HEIGHT */}
           <div
             className="relative overflow-hidden"
-            style={{ height: "clamp(280px, 55vw, 600px)" }}
+            style={{ height: "clamp(320px, 65vw, 700px)" }}
           >
             <AnimatePresence initial={false} custom={dir} mode="sync">
               <motion.div
@@ -102,27 +101,25 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                   <div className="w-full h-full bg-black flex items-center justify-center">
                     <video
                       src={item.media_url}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                       muted playsInline controls controlsList="nodownload"
                     />
                   </div>
                 ) : (
                   <>
-                    {/* object-cover for gallery — fills frame beautifully */}
+                    {/* FIXED IMAGE */}
                     <Image
                       src={item.media_url}
                       alt={item.title || "Gallery"}
                       fill
                       className="object-cover"
-                      sizes="(max-width:640px) 100vw, (max-width:1280px) 90vw, 1200px"
-                      unoptimized
+                      sizes="(max-width:640px) 100vw, (max-width:1024px) 80vw, 1200px"
                       priority={cur === 0}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
                   </>
                 )}
 
-                {/* Video overlay */}
                 {item.media_type === "video" && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -131,7 +128,6 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                   </div>
                 )}
 
-                {/* Bottom bar */}
                 <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-10 pointer-events-none">
                   <div className="flex items-end justify-between">
                     <div>
@@ -150,7 +146,6 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
             </AnimatePresence>
           </div>
 
-          {/* Progress bar */}
           <div className="h-[3px] bg-[rgba(191,160,106,0.12)]">
             <motion.div
               key={cur}
@@ -163,7 +158,6 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           </div>
         </div>
 
-        {/* Dots — no arrows */}
         <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
           {list.map((_, i) => (
             <button
@@ -176,7 +170,10 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
             />
           ))}
         </div>
-        <p className="text-center mt-2 font-jost text-[11px] text-[#9CA3AF]">← Swipe or drag to navigate →</p>
+
+        <p className="text-center mt-2 font-jost text-[11px] text-[#9CA3AF]">
+          ← Swipe or drag to navigate →
+        </p>
       </div>
     </section>
   );
