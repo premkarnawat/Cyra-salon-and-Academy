@@ -1,9 +1,8 @@
-// components/sections/OffersSection.tsx
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
@@ -48,70 +47,49 @@ const FALLBACK: Offer[] = [
 ];
 
 const AUTO_MS = 6000;
-const SWIPE_THRESHOLD = 80; // 🔥 stronger swipe detection
+const SWIPE_THRESHOLD = 80;
 
-export function OffersSection(props: { offers?: Offer[] }) {
-  const offers = props.offers ?? [];
-  const list = Array.isArray(offers) && offers.length ? offers : FALLBACK;
+export function OffersSection({ offers }: { offers?: Offer[] }) {
+  const safeOffers = Array.isArray(offers) ? offers : [];
+  const list = safeOffers.length ? safeOffers : FALLBACK;
   const total = list.length;
 
   const [cur, setCur] = useState(0);
-  const [dir, setDir] = useState(1);
-
-  const dragX = useMotionValue(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startX = useRef<number | null>(null);
+  const timer = useRef<NodeJS.Timeout | null>(null);
 
   /* ── AUTO SLIDE ── */
-  const resetTimer = useCallback(() => {
+  useEffect(() => {
     if (timer.current) clearInterval(timer.current);
+
     timer.current = setInterval(() => {
-      setDir(1);
       setCur((c) => (c + 1) % total);
     }, AUTO_MS);
-  }, [total]);
 
-  useEffect(() => {
-    resetTimer();
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
-  }, [resetTimer]);
+  }, [total]);
 
-  /* ── NAVIGATION ── */
-  function goTo(next: number, direction: number) {
-    setDir(direction);
-    setCur((next + total) % total);
-    resetTimer();
+  /* ── SWIPE HANDLERS (PURE TOUCH, NO BUGS) ── */
+  function handleTouchStart(e: React.TouchEvent) {
+    startX.current = e.touches[0].clientX;
   }
 
-  /* ── 🔥 REAL SWIPE LOGIC ── */
-  function onDragEnd(_: any, info: any) {
-    const offset = info.offset.x;
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (startX.current === null) return;
 
-    if (offset < -SWIPE_THRESHOLD) {
-      goTo(cur + 1, 1);
-    } else if (offset > SWIPE_THRESHOLD) {
-      goTo(cur - 1, -1);
-    } else {
-      animate(dragX, 0, { duration: 0.25 });
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX.current - endX;
+
+    if (diff > SWIPE_THRESHOLD) {
+      setCur((c) => (c + 1) % total);
+    } else if (diff < -SWIPE_THRESHOLD) {
+      setCur((c) => (c - 1 + total) % total);
     }
-  }
 
-  const variants = {
-    enter: (d: number) => ({
-      x: d > 0 ? 400 : -400,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.3 },
-    },
-    exit: (d: number) => ({
-      x: d > 0 ? -400 : 400,
-      opacity: 0,
-    }),
-  };
+    startX.current = null;
+  }
 
   const offer = list[cur] || FALLBACK[0];
 
@@ -122,42 +100,46 @@ export function OffersSection(props: { offers?: Offer[] }) {
         <FadeIn>
           <SectionHeader
             tag="✦ Hot Deals"
-            title={<>Exclusive <em className="text-[var(--gold-light)] not-italic font-normal">Offers</em></>}
+            title={
+              <>
+                Exclusive{" "}
+                <em className="text-[var(--gold-light)] not-italic font-normal">
+                  Offers
+                </em>
+              </>
+            }
             subtitle="Swipe to explore · Limited time deals"
           />
         </FadeIn>
 
         {/* CARD */}
-        <div className="rounded-3xl overflow-hidden bg-white shadow-lg border">
+        <div
+          className="rounded-3xl overflow-hidden bg-white shadow-lg border"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
 
-          {/* IMAGE + SWIPE */}
-          <div className="relative w-full aspect-[4/3] overflow-hidden">
-            <AnimatePresence initial={false} custom={dir} mode="wait">
+          {/* IMAGE */}
+          <div className="relative w-full aspect-[4/3]">
+            <AnimatePresence mode="wait">
               <motion.div
-                key={offer?.id || cur}
-                custom={dir}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.15} // 🔥 smoother swipe
-                onDragEnd={onDragEnd}
-                style={{ x: dragX }}
-                className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
+                key={offer.id}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0"
               >
                 <Image
-                  src={offer?.image_url}
-                  alt={offer?.name}
+                  src={offer.image_url || FALLBACK[0].image_url}
+                  alt={offer.name}
                   fill
                   className="object-cover object-top"
                   sizes="100vw"
                   priority={cur === 0}
-                  quality={70}
                 />
 
-                {offer?.tag && (
+                {offer.tag && (
                   <div className="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded-full text-xs font-semibold">
                     {offer.tag}
                   </div>
@@ -168,19 +150,20 @@ export function OffersSection(props: { offers?: Offer[] }) {
 
           {/* CONTENT */}
           <div className="p-6">
-            <h3 className="text-xl text-gray-800 mb-2">{offer?.name}</h3>
+            <h3 className="text-xl text-gray-800 mb-2">{offer.name}</h3>
 
             <p className="text-3xl font-bold text-[var(--gold)] mb-2">
-              {offer?.discount_text}
+              {offer.discount_text}
             </p>
 
             <p className="text-sm text-gray-500 mb-4">
-              {offer?.description}
+              {offer.description}
             </p>
 
             <a
-              href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer?.name))}
+              href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer.name))}
               target="_blank"
+              rel="noreferrer"
               className="btn-gold inline-flex items-center gap-2 px-6 py-3 rounded-xl"
             >
               <MessageCircle size={14} />
@@ -194,7 +177,7 @@ export function OffersSection(props: { offers?: Offer[] }) {
           {list.map((_, i) => (
             <button
               key={i}
-              onClick={() => goTo(i, i > cur ? 1 : -1)}
+              onClick={() => setCur(i)}
               className={`rounded-full ${
                 i === cur ? "w-6 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
               }`}
