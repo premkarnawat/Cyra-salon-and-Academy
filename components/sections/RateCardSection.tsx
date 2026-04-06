@@ -16,7 +16,7 @@ function partition(cards: RateCard[]) {
   };
 }
 
-/* ── ⚡ FAST IMAGE COMPONENT ───────────────── */
+/* ── ⚡ FAST IMAGE ───────────────── */
 const FastImage = memo(function FastImage({
   src,
   alt,
@@ -31,12 +31,11 @@ const FastImage = memo(function FastImage({
       src={src}
       alt={alt}
       fill
-      className="object-cover object-top will-change-transform"
+      className="object-cover object-top"
       sizes="(max-width:480px) 95vw,(max-width:768px) 60vw,420px"
       priority={priority}
-      quality={60}               // ⚡ fast loading
-      placeholder="blur"
-      blurDataURL={src}          // instant feel
+      quality={70}
+      loading={priority ? "eager" : "lazy"}
       draggable={false}
     />
   );
@@ -63,35 +62,40 @@ function SpiralBook({ images }: { images: RateCard[] }) {
     animate(dragX, 0, { duration: 0.2 });
   }, [page, total]);
 
-  /* ✅ Preload next + prev images (no lag swipe) */
+  /* ⚡ Preload next + prev images */
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const preload = (src: string) => {
       const img = new window.Image();
       img.src = src;
     };
 
-    if (images[page + 1]) preload(images[page + 1].file_url);
-    if (images[page - 1]) preload(images[page - 1].file_url);
+    const next = images[page + 1]?.file_url;
+    const prev = images[page - 1]?.file_url;
+
+    if (next) preload(next);
+    if (prev) preload(prev);
   }, [page, images]);
 
   if (!total) return null;
 
   const variants = {
-    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1, transition: { duration: 0.3 } },
-    exit: (d: number) => ({ x: d > 0 ? "-100%" : "100%", opacity: 0 }),
+    enter: (d: number) => ({ x: d > 0 ? 300 : -300, opacity: 0 }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.25 } },
+    exit: (d: number) => ({ x: d > 0 ? -300 : 300, opacity: 0 }),
   };
 
   return (
     <div style={{ maxWidth:420, margin:"0 auto", userSelect:"none" }}>
 
-      {/* Book Frame */}
+      {/* Book */}
       <div style={{
         position:"relative",
         paddingTop:"133.33%",
         borderRadius:16,
         overflow:"hidden",
-        boxShadow:"0 12px 40px rgba(0,0,0,0.12)"
+        boxShadow:"0 10px 30px rgba(0,0,0,0.12)"
       }}>
 
         <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -117,18 +121,18 @@ function SpiralBook({ images }: { images: RateCard[] }) {
               priority={page === 0}
             />
 
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            {/* ✅ LIGHT overlay (no dark issue) */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
             {/* Title */}
             {images[page].title && (
-              <div className="absolute bottom-4 left-4 text-white text-lg font-cormorant">
+              <div className="absolute bottom-4 left-4 text-white text-lg">
                 {images[page].title}
               </div>
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 right-4 bg-black/40 text-white text-xs px-3 py-1 rounded-full">
+            <div className="absolute bottom-4 right-4 bg-black/30 text-white text-xs px-3 py-1 rounded-full">
               {page + 1}/{total}
             </div>
 
@@ -175,7 +179,7 @@ function Empty() {
   );
 }
 
-/* ── MAIN SECTION ───────────────── */
+/* ── MAIN ───────────────── */
 export function RateCardSection({ rateCards = [] }: { rateCards?: RateCard[] }) {
   const { images } = partition(rateCards);
   const hasContent = images.length > 0;
