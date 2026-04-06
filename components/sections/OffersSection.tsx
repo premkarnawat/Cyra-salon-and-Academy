@@ -98,7 +98,7 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
                 {/* ✅ FIXED IMAGE */}
                 <div className="relative w-full overflow-hidden bg-[#F8F9FB]" style={{ height: "clamp(220px, 42vw, 360px)" }}>
                   <Image
-                    src={offer.image_url}
+                    src={offer.image_url ?? "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=85"}
                     alt={offer.name}
                     fill
                     className="object-cover object-center"
