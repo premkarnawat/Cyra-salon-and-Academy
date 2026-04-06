@@ -10,11 +10,11 @@ import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
 import type { Offer } from "@/types";
 
 const FALLBACK: Offer[] = [
-  { id:"o1", tag:"Best Seller",  name:"Keratin Treatment", discount_text:"30% OFF",    description:"Silky smooth, frizz-free hair lasting 4–6 months",   image_url:"https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=800&q=85", is_active:true, sort_order:1, created_at:"" },
-  { id:"o2", tag:"Popular",      name:"Hair Colouring",    discount_text:"25% OFF",    description:"Global colour, highlights & balayage by experts",    image_url:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&q=85", is_active:true, sort_order:2, created_at:"" },
-  { id:"o3", tag:"Limited",      name:"Bridal Package",    discount_text:"₹999 ONLY",  description:"Complete hair + makeup + styling for your special day",image_url:"https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=800&q=85", is_active:true, sort_order:3, created_at:"" },
-  { id:"o4", tag:"Relax",        name:"Hair Spa",           discount_text:"20% OFF",   description:"Deep conditioning with scalp massage & nourishment",  image_url:"https://images.unsplash.com/photo-1470259078422-826894b933aa?w=800&q=85", is_active:true, sort_order:4, created_at:"" },
-  { id:"o5", tag:"Quick Deal",   name:"Cut & Style",        discount_text:"15% OFF",   description:"Expert cut with salon-finish blow dry",               image_url:"https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=85", is_active:true, sort_order:5, created_at:"" },
+  { id:"o1", tag:"Best Seller",  name:"Keratin Treatment", discount_text:"30% OFF", description:"Silky smooth, frizz-free hair lasting 4–6 months", image_url:"https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=800&q=85", is_active:true, sort_order:1, created_at:"" },
+  { id:"o2", tag:"Popular", name:"Hair Colouring", discount_text:"25% OFF", description:"Global colour, highlights & balayage by experts", image_url:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&q=85", is_active:true, sort_order:2, created_at:"" },
+  { id:"o3", tag:"Limited", name:"Bridal Package", discount_text:"₹999 ONLY", description:"Complete hair + makeup + styling", image_url:"https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=800&q=85", is_active:true, sort_order:3, created_at:"" },
+  { id:"o4", tag:"Relax", name:"Hair Spa", discount_text:"20% OFF", description:"Deep conditioning with scalp massage", image_url:"https://images.unsplash.com/photo-1470259078422-826894b933aa?w=800&q=85", is_active:true, sort_order:4, created_at:"" },
+  { id:"o5", tag:"Quick Deal", name:"Cut & Style", discount_text:"15% OFF", description:"Expert cut with blow dry", image_url:"https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=85", is_active:true, sort_order:5, created_at:"" },
 ];
 
 const SWIPE_MIN = 50;
@@ -22,10 +22,11 @@ const SWIPE_MIN = 50;
 export function OffersSection({ offers }: { offers: Offer[] }) {
   const list  = offers.length ? offers : FALLBACK;
   const total = list.length;
-  const [cur, setCur]   = useState(0);
-  const [dir, setDir]   = useState(1);
-  const dragX           = useMotionValue(0);
-  const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [cur, setCur] = useState(0);
+  const [dir, setDir] = useState(1);
+  const dragX = useMotionValue(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -35,7 +36,10 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
     }, 6000);
   }, [total]);
 
-  useEffect(() => { resetTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [resetTimer]);
+  useEffect(() => {
+    resetTimer();
+    return () => timerRef.current && clearInterval(timerRef.current);
+  }, [resetTimer]);
 
   function goTo(next: number, direction: number) {
     setDir(direction);
@@ -45,8 +49,8 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
 
   function onDragEnd(_: unknown, info: { offset: { x: number } }) {
     const dx = info.offset.x;
-    if      (dx < -SWIPE_MIN) goTo(cur + 1,  1);
-    else if (dx >  SWIPE_MIN) goTo(cur - 1, -1);
+    if (dx < -SWIPE_MIN) goTo(cur + 1, 1);
+    else if (dx > SWIPE_MIN) goTo(cur - 1, -1);
     animate(dragX, 0, { duration: 0.25 });
   }
 
@@ -69,7 +73,6 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
           />
         </FadeIn>
 
-        {/* Carousel — full width card, swipe only */}
         <div className="relative max-w-2xl mx-auto select-none">
           <div className="rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.1)] border border-[rgba(191,160,106,0.15)] bg-white">
             <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -87,36 +90,26 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
                 style={{ x: dragX, cursor: "grab" }}
                 whileDrag={{ cursor: "grabbing" }}
               >
-                {/* Image — object-cover, full width, fixed height */}
-                <div className="relative w-full overflow-hidden bg-[#F8F9FB]" style={{ height: "clamp(200px, 40vw, 340px)" }}>
+                {/* ✅ FIXED IMAGE */}
+                <div className="relative w-full overflow-hidden bg-[#F8F9FB]" style={{ height: "clamp(220px, 42vw, 360px)" }}>
                   <Image
-                    src={offer.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=85"}
+                    src={offer.image_url}
                     alt={offer.name}
                     fill
-                    className="object-cover"
-                    sizes="(max-width:640px) 100vw, 672px"
-                    unoptimized
+                    className="object-cover object-center"
+                    sizes="(max-width:640px) 100vw, (max-width:1024px) 80vw, 672px"
                     priority={cur === 0}
                   />
-                  {/* Tag badge */}
-                  {offer.tag && (
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-[var(--gold-dark)] text-[9px] font-bold px-3 py-1.5 rounded-full tracking-[0.18em] uppercase border border-[rgba(191,160,106,0.3)]">
-                      {offer.tag}
-                    </div>
-                  )}
                 </div>
 
-                {/* Content */}
                 <div className="px-6 py-5">
                   <div className="font-cormorant text-xl text-[#1F2937] mb-1">{offer.name}</div>
 
-                  {/* Discount text — darker off-white tone for readability */}
                   <div
                     className="font-jost font-black leading-none mb-2"
                     style={{
                       fontSize: "clamp(2rem, 6vw, 3rem)",
-                      color: "#C8A87A",          /* darker gold-off-white — readable */
-                      letterSpacing: "-0.02em",
+                      color: "#C8A87A",
                     }}
                   >
                     {offer.discount_text}
@@ -139,32 +132,22 @@ export function OffersSection({ offers }: { offers: Offer[] }) {
             </AnimatePresence>
           </div>
 
-          {/* Dots — no buttons */}
           <div className="mt-5 flex items-center justify-center gap-2">
             {list.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goTo(i, i > cur ? 1 : -1)}
-                aria-label={`Offer ${i + 1}`}
                 className={`rounded-full transition-all duration-300 ${
-                  i === cur ? "w-7 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-[rgba(191,160,106,0.3)] hover:bg-[rgba(191,160,106,0.55)]"
+                  i === cur ? "w-7 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-[rgba(191,160,106,0.3)]"
                 }`}
               />
             ))}
           </div>
 
-          <p className="text-center mt-2 font-jost text-[11px] text-[#9CA3AF]">← Swipe to navigate →</p>
+          <p className="text-center mt-2 font-jost text-[11px] text-[#9CA3AF]">
+            ← Swipe to navigate →
+          </p>
         </div>
-
-        <FadeIn className="text-center mt-10">
-          <a
-            href="#packages"
-            onClick={e => { e.preventDefault(); document.querySelector("#packages")?.scrollIntoView({ behavior:"smooth" }); }}
-            className="btn-ghost-gold inline-block px-8 py-3 rounded-full text-xs tracking-[0.2em]"
-          >
-            View All Packages ↓
-          </a>
-        </FadeIn>
       </div>
     </section>
   );
