@@ -81,7 +81,7 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
 
           {/* FIXED HEIGHT */}
           <div
-            className="relative overflow-hidden"
+            className="relative overflow-hidden flex items-center justify-center"
             style={{ height: "clamp(320px, 65vw, 700px)" }}
           >
             <AnimatePresence initial={false} custom={dir} mode="sync">
@@ -101,32 +101,24 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                   <div className="w-full h-full bg-black flex items-center justify-center">
                     <video
                       src={item.media_url}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       muted playsInline controls controlsList="nodownload"
                     />
                   </div>
                 ) : (
-                  <>
-                    {/* FIXED IMAGE */}
+                  <div className="w-full h-full flex items-center justify-center bg-[#F8F9FB]">
                     <Image
                       src={item.media_url}
                       alt={item.title || "Gallery"}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       sizes="(max-width:640px) 100vw, (max-width:1024px) 80vw, 1200px"
                       priority={cur === 0}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
-                  </>
-                )}
-
-                {item.media_type === "video" && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Play size={22} className="text-white ml-0.5" />
-                    </div>
                   </div>
                 )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                 <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-10 pointer-events-none">
                   <div className="flex items-end justify-between">
@@ -142,6 +134,14 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                     </div>
                   </div>
                 </div>
+
+                {item.media_type === "video" && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Play size={22} className="text-white ml-0.5" />
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
