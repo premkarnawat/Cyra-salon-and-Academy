@@ -76,7 +76,7 @@ export function GallerySection(props: any) {
       x: 0,
       opacity: 1,
       transition: { duration: 0.45 },
-    }, // ✅ FIXED (removed extra bracket)
+    },
     exit: (d: number) => ({
       x: d > 0 ? "-100%" : "100%",
       opacity: 0,
@@ -106,7 +106,8 @@ export function GallerySection(props: any) {
 
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          <div className="relative w-full h-[70vh] sm:h-[85vh] flex items-center justify-center overflow-hidden">
+          {/* FRAME */}
+          <div className="relative w-full h-[70vh] sm:h-[85vh] overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
               <motion.div
@@ -121,30 +122,59 @@ export function GallerySection(props: any) {
                 dragElastic={0.12}
                 onDragEnd={onDragEnd}
                 style={{ x: dragX }}
-                className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
+                className="absolute inset-0"
               >
 
-                <Image
-                  src={item.media_url}
-                  alt={item.title || "Gallery"}
-                  fill
-                  className="object-contain"
-                  sizes="100vw"
-                  priority
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
-                <div className="absolute bottom-5 left-5 text-white">
-                  <p className="text-xl">{item.title}</p>
+                {/* 🔥 BLURRED BACKGROUND (fills gaps) */}
+                <div className="absolute inset-0">
+                  <Image
+                    src={item.media_url}
+                    alt="bg"
+                    fill
+                    className="object-cover blur-3xl scale-125 opacity-40"
+                    sizes="100vw"
+                    priority
+                  />
                 </div>
 
-                <div className="absolute bottom-5 right-5 bg-black/40 text-white text-xs px-3 py-1 rounded-full">
+                {/* 🔥 MAIN IMAGE (always visible properly) */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {item.media_type === "video" ? (
+                    <video
+                      src={item.media_url}
+                      className="max-h-full max-w-full object-contain"
+                      muted
+                      playsInline
+                      controls
+                    />
+                  ) : (
+                    <Image
+                      src={item.media_url}
+                      alt={item.title || "Gallery"}
+                      fill
+                      className="object-contain"
+                      sizes="100vw"
+                      priority
+                    />
+                  )}
+                </div>
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+
+                {/* Title */}
+                <div className="absolute bottom-5 left-5 text-white">
+                  <p className="text-xl font-cormorant">{item.title}</p>
+                </div>
+
+                {/* Counter */}
+                <div className="absolute bottom-5 right-5 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
                   {cur + 1}/{total}
                 </div>
 
+                {/* Play Icon */}
                 {item.media_type === "video" && (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <Play size={42} className="text-white" />
                   </div>
                 )}
@@ -153,19 +183,38 @@ export function GallerySection(props: any) {
             </AnimatePresence>
           </div>
 
+          {/* Progress bar */}
+          <div className="h-[3px] bg-gray-200">
+            <motion.div
+              key={cur}
+              className="h-full bg-[var(--gold)]"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: AUTO_MS / 1000, ease: "linear" }}
+              style={{ transformOrigin: "left" }}
+            />
+          </div>
+
         </div>
 
+        {/* Dots */}
         <div className="mt-5 flex justify-center gap-2">
           {list.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => goTo(i, i > cur ? 1 : -1)}
-              className={`rounded-full ${
-                i === cur ? "w-8 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
+              className={`rounded-full transition-all ${
+                i === cur
+                  ? "w-8 h-2 bg-[var(--gold)]"
+                  : "w-2 h-2 bg-gray-300"
               }`}
             />
           ))}
         </div>
+
+        <p className="text-center mt-2 text-xs text-gray-400">
+          ← Swipe or drag →
+        </p>
 
       </div>
     </section>
