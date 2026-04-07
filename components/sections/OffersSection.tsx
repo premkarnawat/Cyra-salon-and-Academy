@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
 
+/* SAFE FALLBACK */
 const FALLBACK = [
   {
     id: "o1",
@@ -15,7 +16,7 @@ const FALLBACK = [
     name: "Keratin Treatment",
     discount_text: "30% OFF",
     description: "Silky smooth hair",
-    image_url: "https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=700&q=65",
+    image_url: "https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=800&q=70",
   },
   {
     id: "o2",
@@ -23,7 +24,7 @@ const FALLBACK = [
     name: "Hair Colouring",
     discount_text: "25% OFF",
     description: "Professional colouring",
-    image_url: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=700&q=65",
+    image_url: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&q=70",
   },
 ];
 
@@ -39,6 +40,7 @@ export function OffersSection({ offers }: any) {
   const timer = useRef<any>(null);
   const startX = useRef(0);
 
+  /* AUTO SLIDE */
   useEffect(() => {
     if (timer.current) clearInterval(timer.current);
 
@@ -47,14 +49,12 @@ export function OffersSection({ offers }: any) {
       setCur((c: number) => (c + 1) % list.length);
     }, AUTO_MS);
 
-    return () => clearInterval(timer.current);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
   }, [list.length]);
 
-  const goTo = (next: number, direction: number) => {
-    setDir(direction);
-    setCur((next + list.length) % list.length);
-  };
-
+  /* SWIPE */
   const handleTouchStart = (e: any) => {
     startX.current = e.touches[0].clientX;
   };
@@ -62,8 +62,13 @@ export function OffersSection({ offers }: any) {
   const handleTouchEnd = (e: any) => {
     const diff = startX.current - e.changedTouches[0].clientX;
 
-    if (diff > SWIPE) goTo(cur + 1, 1);
-    else if (diff < -SWIPE) goTo(cur - 1, -1);
+    if (diff > SWIPE) {
+      setDir(1);
+      setCur((c: number) => (c + 1) % list.length);
+    } else if (diff < -SWIPE) {
+      setDir(-1);
+      setCur((c: number) => (c - 1 + list.length) % list.length);
+    }
   };
 
   const variants = {
@@ -82,7 +87,7 @@ export function OffersSection({ offers }: any) {
     }),
   };
 
-  const offer = list[cur];
+  const offer = list[cur] || FALLBACK[0];
 
   return (
     <section className="py-20 bg-[#F8F9FB]">
@@ -102,7 +107,7 @@ export function OffersSection({ offers }: any) {
           onTouchEnd={handleTouchEnd}
         >
 
-          {/* IMAGE + SLIDE */}
+          {/* IMAGE WITH SLIDE */}
           <div className="relative w-full h-[280px] sm:h-[320px] overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir}>
@@ -120,6 +125,8 @@ export function OffersSection({ offers }: any) {
                   alt={offer.name}
                   fill
                   className="object-cover object-top"
+                  sizes="100vw"
+                  priority
                 />
 
                 {offer.tag && (
