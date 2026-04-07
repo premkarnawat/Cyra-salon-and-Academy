@@ -7,9 +7,7 @@ import { Play } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
 
-/* ❌ removed type import completely */
-
-/* SAFE FALLBACK */
+/* ✅ SAFE FALLBACK */
 const FALLBACK = [
   {
     id: "g1",
@@ -31,14 +29,15 @@ const SWIPE_MIN = 50;
 export function GallerySection(props: any) {
   const gallery = props?.gallery || [];
   const list = Array.isArray(gallery) && gallery.length ? gallery : FALLBACK;
-
   const total = list.length;
 
   const [cur, setCur] = useState(0);
   const [dir, setDir] = useState(1);
 
   const dragX = useMotionValue(0);
-  const timer = useRef<any>(null); // ✅ FIXED
+
+  /* ✅ FIXED TIMER (IMPORTANT) */
+  const timer = useRef<any>(null);
 
   const resetTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
@@ -51,6 +50,7 @@ export function GallerySection(props: any) {
 
   useEffect(() => {
     resetTimer();
+
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
@@ -77,7 +77,7 @@ export function GallerySection(props: any) {
     center: {
       x: 0,
       opacity: 1,
-      transition: { duration: 0.4 },
+      transition: { duration: 0.45 },
     }),
     exit: (d: number) => ({
       x: d > 0 ? "-100%" : "100%",
@@ -88,7 +88,7 @@ export function GallerySection(props: any) {
   const item = list[cur];
 
   return (
-    <section className="py-20 bg-white">
+    <section id="gallery" className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-4">
 
         <FadeIn>
@@ -108,7 +108,7 @@ export function GallerySection(props: any) {
 
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          {/* ✅ FIXED FRAME */}
+          {/* ✅ FIXED FRAME (NO CROPPING) */}
           <div className="relative w-full h-[70vh] sm:h-[85vh] flex items-center justify-center overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -127,6 +127,7 @@ export function GallerySection(props: any) {
                 className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
               >
 
+                {/* ✅ IMAGE FULL FIT */}
                 <Image
                   src={item.media_url}
                   alt={item.title || "Gallery"}
@@ -148,6 +149,13 @@ export function GallerySection(props: any) {
                 <div className="absolute bottom-5 right-5 bg-black/40 text-white text-xs px-3 py-1 rounded-full">
                   {cur + 1}/{total}
                 </div>
+
+                {/* Play icon */}
+                {item.media_type === "video" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Play size={42} className="text-white" />
+                  </div>
+                )}
 
               </motion.div>
             </AnimatePresence>
