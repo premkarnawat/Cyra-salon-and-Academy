@@ -126,37 +126,28 @@ export function GallerySection(props: any) {
               >
 
                 {/* 🔥 BLURRED BACKGROUND (fills gaps) */}
+                {/* 🔥 SAME IMAGE BACKGROUND (ZOOM + BLUR) */}
                 <div className="absolute inset-0">
                   <Image
                     src={item.media_url}
                     alt="bg"
                     fill
-                    className="object-cover blur-3xl scale-125 opacity-40"
+                    className="object-cover scale-125 blur-2xl brightness-75"
                     sizes="100vw"
                     priority
                   />
                 </div>
-
-                {/* 🔥 MAIN IMAGE (always visible properly) */}
+                
+                {/* 🔥 MAIN IMAGE (SHARP) */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {item.media_type === "video" ? (
-                    <video
-                      src={item.media_url}
-                      className="max-h-full max-w-full object-contain"
-                      muted
-                      playsInline
-                      controls
-                    />
-                  ) : (
-                    <Image
-                      src={item.media_url}
-                      alt={item.title || "Gallery"}
-                      fill
-                      className="object-contain"
-                      sizes="100vw"
-                      priority
-                    />
-                  )}
+                  <Image
+                    src={item.media_url}
+                    alt={item.title || "Gallery"}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    priority
+                  />
                 </div>
 
                 {/* Overlay */}
