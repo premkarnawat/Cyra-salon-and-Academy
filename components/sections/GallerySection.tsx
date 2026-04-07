@@ -35,8 +35,6 @@ export function GallerySection(props: any) {
   const [dir, setDir] = useState(1);
 
   const dragX = useMotionValue(0);
-
-  /* ✅ FIXED TIMER (IMPORTANT) */
   const timer = useRef<any>(null);
 
   const resetTimer = useCallback(() => {
@@ -78,7 +76,7 @@ export function GallerySection(props: any) {
       x: 0,
       opacity: 1,
       transition: { duration: 0.45 },
-    }),
+    }, // ✅ FIXED (removed extra bracket)
     exit: (d: number) => ({
       x: d > 0 ? "-100%" : "100%",
       opacity: 0,
@@ -108,7 +106,6 @@ export function GallerySection(props: any) {
 
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          {/* ✅ FIXED FRAME (NO CROPPING) */}
           <div className="relative w-full h-[70vh] sm:h-[85vh] flex items-center justify-center overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -127,7 +124,6 @@ export function GallerySection(props: any) {
                 className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
               >
 
-                {/* ✅ IMAGE FULL FIT */}
                 <Image
                   src={item.media_url}
                   alt={item.title || "Gallery"}
@@ -137,20 +133,16 @@ export function GallerySection(props: any) {
                   priority
                 />
 
-                {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-                {/* Title */}
                 <div className="absolute bottom-5 left-5 text-white">
                   <p className="text-xl">{item.title}</p>
                 </div>
 
-                {/* Counter */}
                 <div className="absolute bottom-5 right-5 bg-black/40 text-white text-xs px-3 py-1 rounded-full">
                   {cur + 1}/{total}
                 </div>
 
-                {/* Play icon */}
                 {item.media_type === "video" && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play size={42} className="text-white" />
@@ -163,7 +155,6 @@ export function GallerySection(props: any) {
 
         </div>
 
-        {/* Dots */}
         <div className="mt-5 flex justify-center gap-2">
           {list.map((_: any, i: number) => (
             <button
