@@ -7,7 +7,7 @@ import { Play } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
 
-/* ❌ removed type import to avoid Vercel error */
+/* ❌ removed type import completely */
 
 /* SAFE FALLBACK */
 const FALLBACK = [
@@ -28,18 +28,21 @@ const FALLBACK = [
 const AUTO_MS = 7000;
 const SWIPE_MIN = 50;
 
-export function GallerySection({ gallery }: any) {
+export function GallerySection(props: any) {
+  const gallery = props?.gallery || [];
   const list = Array.isArray(gallery) && gallery.length ? gallery : FALLBACK;
+
   const total = list.length;
 
   const [cur, setCur] = useState(0);
   const [dir, setDir] = useState(1);
 
   const dragX = useMotionValue(0);
-  const timer = useRef<any>(null); // ✅ SAFE
+  const timer = useRef<any>(null); // ✅ FIXED
 
   const resetTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
+
     timer.current = setInterval(() => {
       setDir(1);
       setCur((c: number) => (c + 1) % total);
@@ -62,6 +65,7 @@ export function GallerySection({ gallery }: any) {
   function onDragEnd(_: any, info: any) {
     if (info.offset.x < -SWIPE_MIN) goTo(cur + 1, 1);
     else if (info.offset.x > SWIPE_MIN) goTo(cur - 1, -1);
+
     animate(dragX, 0, { duration: 0.25 });
   }
 
@@ -73,19 +77,18 @@ export function GallerySection({ gallery }: any) {
     center: {
       x: 0,
       opacity: 1,
-      transition: { duration: 0.45 },
+      transition: { duration: 0.4 },
     }),
     exit: (d: number) => ({
       x: d > 0 ? "-100%" : "100%",
       opacity: 0,
-      transition: { duration: 0.3 },
     }),
   };
 
   const item = list[cur];
 
   return (
-    <section id="gallery" className="py-20 bg-white">
+    <section className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-4">
 
         <FadeIn>
@@ -103,10 +106,9 @@ export function GallerySection({ gallery }: any) {
           />
         </FadeIn>
 
-        {/* MAIN CARD */}
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          {/* ✅ FIXED FRAME (NO CROPPING + MOBILE FRIENDLY) */}
+          {/* ✅ FIXED FRAME */}
           <div className="relative w-full h-[70vh] sm:h-[85vh] flex items-center justify-center overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
@@ -125,59 +127,30 @@ export function GallerySection({ gallery }: any) {
                 className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
               >
 
-                {item.media_type === "video" ? (
-                  <video
-                    src={item.media_url}
-                    className="w-full h-full object-contain"
-                    muted
-                    playsInline
-                    controls
-                  />
-                ) : (
-                  <Image
-                    src={item.media_url}
-                    alt={item.title || "Gallery"}
-                    fill
-                    className="object-contain"
-                    sizes="100vw"
-                    priority={cur === 0}
-                  />
-                )}
+                <Image
+                  src={item.media_url}
+                  alt={item.title || "Gallery"}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                  priority
+                />
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
                 {/* Title */}
                 <div className="absolute bottom-5 left-5 text-white">
-                  <p className="text-xl font-cormorant">{item.title}</p>
+                  <p className="text-xl">{item.title}</p>
                 </div>
 
                 {/* Counter */}
-                <div className="absolute bottom-5 right-5 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
+                <div className="absolute bottom-5 right-5 bg-black/40 text-white text-xs px-3 py-1 rounded-full">
                   {cur + 1}/{total}
                 </div>
 
-                {/* Play */}
-                {item.media_type === "video" && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Play size={42} className="text-white" />
-                  </div>
-                )}
-
               </motion.div>
             </AnimatePresence>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-[3px] bg-gray-200">
-            <motion.div
-              key={cur}
-              className="h-full bg-[var(--gold)]"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: AUTO_MS / 1000, ease: "linear" }}
-              style={{ transformOrigin: "left" }}
-            />
           </div>
 
         </div>
@@ -188,18 +161,12 @@ export function GallerySection({ gallery }: any) {
             <button
               key={i}
               onClick={() => goTo(i, i > cur ? 1 : -1)}
-              className={`rounded-full transition-all ${
-                i === cur
-                  ? "w-8 h-2 bg-[var(--gold)]"
-                  : "w-2 h-2 bg-gray-300"
+              className={`rounded-full ${
+                i === cur ? "w-8 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
               }`}
             />
           ))}
         </div>
-
-        <p className="text-center mt-2 text-xs text-gray-400">
-          ← Swipe or drag →
-        </p>
 
       </div>
     </section>
