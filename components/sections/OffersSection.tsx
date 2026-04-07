@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
@@ -29,13 +28,12 @@ const FALLBACK = [
 ];
 
 const AUTO_MS = 5000;
-const SWIPE = 80;
+const SWIPE = 70;
 
 export function OffersSection({ offers }: any) {
   const list = Array.isArray(offers) && offers.length ? offers : FALLBACK;
 
   const [cur, setCur] = useState(0);
-  const [dir, setDir] = useState(1);
 
   const timer = useRef<any>(null);
   const startX = useRef(0);
@@ -45,7 +43,6 @@ export function OffersSection({ offers }: any) {
     if (timer.current) clearInterval(timer.current);
 
     timer.current = setInterval(() => {
-      setDir(1);
       setCur((c: number) => (c + 1) % list.length);
     }, AUTO_MS);
 
@@ -63,28 +60,10 @@ export function OffersSection({ offers }: any) {
     const diff = startX.current - e.changedTouches[0].clientX;
 
     if (diff > SWIPE) {
-      setDir(1);
       setCur((c: number) => (c + 1) % list.length);
     } else if (diff < -SWIPE) {
-      setDir(-1);
       setCur((c: number) => (c - 1 + list.length) % list.length);
     }
-  };
-
-  const variants = {
-    enter: (d: number) => ({
-      x: d > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.35 },
-    }),
-    exit: (d: number) => ({
-      x: d > 0 ? -300 : 300,
-      opacity: 0,
-    }),
   };
 
   const offer = list[cur] || FALLBACK[0];
@@ -96,63 +75,81 @@ export function OffersSection({ offers }: any) {
         <FadeIn>
           <SectionHeader
             tag="✦ Hot Deals"
-            title={<>Exclusive <em className="text-[var(--gold-light)] not-italic">Offers</em></>}
+            title={
+              <>
+                Exclusive{" "}
+                <em className="text-[var(--gold-light)] not-italic">
+                  Offers
+                </em>
+              </>
+            }
             subtitle="Swipe to explore"
           />
         </FadeIn>
 
         <div
-          className="bg-white rounded-3xl overflow-hidden shadow-lg"
+          className="bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-500"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
 
-          {/* IMAGE WITH SLIDE */}
-          <div className="relative w-full h-[280px] sm:h-[320px] overflow-hidden">
+          {/* IMAGE (SMOOTH FADE INSTEAD OF SLIDE = SAFE) */}
+          <div className="relative w-full h-[280px] sm:h-[320px]">
 
-            <AnimatePresence initial={false} custom={dir}>
-              <motion.div
-                key={offer.id}
-                custom={dir}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="absolute inset-0"
-              >
-                <Image
-                  src={offer.image_url}
-                  alt={offer.name}
-                  fill
-                  className="object-cover object-top"
-                  sizes="100vw"
-                  priority
-                />
+            <Image
+              key={offer.id} // 🔥 important for animation
+              src={offer.image_url}
+              alt={offer.name}
+              fill
+              className="object-cover object-top transition-opacity duration-500 opacity-100"
+              sizes="100vw"
+              priority
+            />
 
-                {offer.tag && (
-                  <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-xs">
-                    {offer.tag}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            {offer.tag && (
+              <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-xs font-semibold">
+                {offer.tag}
+              </div>
+            )}
           </div>
 
           {/* CONTENT */}
-          <div className="p-6">
-            <h3 className="text-xl">{offer.name}</h3>
-            <p className="text-2xl text-[var(--gold)] font-bold">{offer.discount_text}</p>
-            <p className="text-sm text-gray-500">{offer.description}</p>
+          <div className="p-6 transition-all duration-300">
+            <h3 className="text-xl mb-2">{offer.name}</h3>
+
+            <p className="text-2xl font-bold text-[var(--gold)] mb-2">
+              {offer.discount_text}
+            </p>
+
+            <p className="text-sm text-gray-500 mb-4">
+              {offer.description}
+            </p>
 
             <a
               href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(offer.name))}
-              className="btn-gold mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-xl"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-gold px-6 py-3 rounded-xl inline-flex items-center gap-2"
             >
               <MessageCircle size={14} />
               Book Now
             </a>
           </div>
         </div>
+
+        {/* DOTS */}
+        <div className="flex justify-center mt-4 gap-2">
+          {list.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => setCur(i)}
+              className={`${
+                i === cur ? "w-6 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
+              } rounded-full transition-all`}
+            />
+          ))}
+        </div>
+
       </div>
     </section>
   );
