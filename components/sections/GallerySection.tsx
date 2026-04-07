@@ -6,44 +6,50 @@ import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion"
 import { Play } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { FadeIn } from "@/components/animations/FadeIn";
-import type { GalleryItem } from "@/types";
 
-const FALLBACK: GalleryItem[] = [
-  { id:"g1", title:"Balayage", media_url:"https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&q=80", media_type:"image", sort_order:1, is_active:true, created_at:"" },
-  { id:"g2", title:"Keratin", media_url:"https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=1200&q=80", media_type:"image", sort_order:2, is_active:true, created_at:"" },
-  { id:"g3", title:"Styling", media_url:"https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1200&q=80", media_type:"image", sort_order:3, is_active:true, created_at:"" },
-  { id:"g4", title:"Colour", media_url:"https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=1200&q=80", media_type:"image", sort_order:4, is_active:true, created_at:"" },
+/* ❌ removed type import to avoid Vercel error */
+
+/* SAFE FALLBACK */
+const FALLBACK = [
+  {
+    id: "g1",
+    title: "Balayage",
+    media_url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&q=80",
+    media_type: "image",
+  },
+  {
+    id: "g2",
+    title: "Keratin",
+    media_url: "https://images.unsplash.com/photo-1562322140-8baeababf0ba?w=1200&q=80",
+    media_type: "image",
+  },
 ];
 
 const AUTO_MS = 7000;
 const SWIPE_MIN = 50;
 
-export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
-  const list = gallery.length ? gallery : FALLBACK;
+export function GallerySection({ gallery }: any) {
+  const list = Array.isArray(gallery) && gallery.length ? gallery : FALLBACK;
   const total = list.length;
 
   const [cur, setCur] = useState(0);
   const [dir, setDir] = useState(1);
 
   const dragX = useMotionValue(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timer = useRef<any>(null); // ✅ SAFE
 
   const resetTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
     timer.current = setInterval(() => {
       setDir(1);
-      setCur((c) => (c + 1) % total);
+      setCur((c: number) => (c + 1) % total);
     }, AUTO_MS);
   }, [total]);
 
-  // ✅ FIXED useEffect (no TypeScript error)
   useEffect(() => {
     resetTimer();
-
     return () => {
-      if (timer.current) {
-        clearInterval(timer.current);
-      }
+      if (timer.current) clearInterval(timer.current);
     };
   }, [resetTimer]);
 
@@ -60,9 +66,20 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
   }
 
   const variants = {
-    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1, transition: { duration: 0.5 } },
-    exit: (d: number) => ({ x: d > 0 ? "-100%" : "100%", opacity: 0 }),
+    enter: (d: number) => ({
+      x: d > 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.45 },
+    }),
+    exit: (d: number) => ({
+      x: d > 0 ? "-100%" : "100%",
+      opacity: 0,
+      transition: { duration: 0.3 },
+    }),
   };
 
   const item = list[cur];
@@ -74,16 +91,23 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
         <FadeIn>
           <SectionHeader
             tag="📸 Transformations"
-            title={<>Our <em className="text-[var(--gold-light)] not-italic font-normal">Gallery</em></>}
+            title={
+              <>
+                Our{" "}
+                <em className="text-[var(--gold-light)] not-italic font-normal">
+                  Gallery
+                </em>
+              </>
+            }
             subtitle="Swipe to explore luxury transformations"
           />
         </FadeIn>
 
-        {/* 🔥 MAIN CARD */}
+        {/* MAIN CARD */}
         <div className="rounded-3xl overflow-hidden border shadow-xl bg-[#F8F9FB]">
 
-          {/* ✅ AUTO FIT IMAGE (same as packages) */}
-          <div className="relative w-full aspect-[4/3] overflow-hidden">
+          {/* ✅ FIXED FRAME (NO CROPPING + MOBILE FRIENDLY) */}
+          <div className="relative w-full h-[70vh] sm:h-[85vh] flex items-center justify-center overflow-hidden">
 
             <AnimatePresence initial={false} custom={dir} mode="wait">
               <motion.div
@@ -98,13 +122,13 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
                 dragElastic={0.12}
                 onDragEnd={onDragEnd}
                 style={{ x: dragX }}
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
               >
 
                 {item.media_type === "video" ? (
                   <video
                     src={item.media_url}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     muted
                     playsInline
                     controls
@@ -114,19 +138,18 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
                     src={item.media_url}
                     alt={item.title || "Gallery"}
                     fill
-                    className="object-cover object-top transition-transform duration-500 hover:scale-105"
+                    className="object-contain"
                     sizes="100vw"
                     priority={cur === 0}
-                    quality={75}
                   />
                 )}
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                 {/* Title */}
                 <div className="absolute bottom-5 left-5 text-white">
-                  <p className="text-xl font-cormorant tracking-wide">{item.title}</p>
+                  <p className="text-xl font-cormorant">{item.title}</p>
                 </div>
 
                 {/* Counter */}
@@ -134,7 +157,7 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
                   {cur + 1}/{total}
                 </div>
 
-                {/* Play icon */}
+                {/* Play */}
                 {item.media_type === "video" && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play size={42} className="text-white" />
@@ -161,12 +184,14 @@ export function GallerySection({ gallery = [] }: { gallery?: GalleryItem[] }) {
 
         {/* Dots */}
         <div className="mt-5 flex justify-center gap-2">
-          {list.map((_, i) => (
+          {list.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => goTo(i, i > cur ? 1 : -1)}
               className={`rounded-full transition-all ${
-                i === cur ? "w-8 h-2 bg-[var(--gold)]" : "w-2 h-2 bg-gray-300"
+                i === cur
+                  ? "w-8 h-2 bg-[var(--gold)]"
+                  : "w-2 h-2 bg-gray-300"
               }`}
             />
           ))}
