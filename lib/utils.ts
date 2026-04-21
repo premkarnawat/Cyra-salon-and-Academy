@@ -45,14 +45,37 @@ export function getOrCreateSessionId(): string {
   return sid;
 }
 
+// ── Returning user detection ──────────────────────────────────────────────────
+// Uses localStorage (persists across sessions / browser restarts)
+// Keys: cyra_user_submitted, cyra_user_name, cyra_user_contact
+
+const LS_SUBMITTED = "cyra_user_submitted";
+const LS_NAME      = "cyra_user_name";
+const LS_CONTACT   = "cyra_user_contact";
+
 export function isFormSubmitted(): boolean {
   if (typeof window === "undefined") return false;
-  return sessionStorage.getItem("cyra_form_submitted") === "true";
+  return localStorage.getItem(LS_SUBMITTED) === "true";
 }
 
-export function markFormSubmitted(): void {
+export function markFormSubmitted(name: string, contact: string): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem("cyra_form_submitted", "true");
+  localStorage.setItem(LS_SUBMITTED, "true");
+  localStorage.setItem(LS_NAME,      name);
+  localStorage.setItem(LS_CONTACT,   contact);
+}
+
+/** Returns saved user name, or null if new visitor */
+export function getReturningUserName(): string | null {
+  if (typeof window === "undefined") return null;
+  if (localStorage.getItem(LS_SUBMITTED) !== "true") return null;
+  return localStorage.getItem(LS_NAME);
+}
+
+/** Returns saved contact number, or null */
+export function getReturningUserContact(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(LS_CONTACT);
 }
 
 export function starArray(rating: number): boolean[] {
@@ -60,9 +83,9 @@ export function starArray(rating: number): boolean[] {
 }
 
 export const WHATSAPP_MESSAGES = {
-  offers: "Heyy, I want to inquire about offers and packages 🌟",
+  offers:   "Heyy, I want to inquire about offers and packages 🌟",
   services: "Heyy, I want to inquire about rates and services 💇‍♀️",
-  general: "Heyy, I want to inquire about Cyra Salon ✨",
-  booking: (service: string) =>
+  general:  "Heyy, I want to inquire about Cyra Salon ✨",
+  booking:  (service: string) =>
     `Heyy, I want to book "${service}" at Cyra Salon. Please share availability 📅`,
 };
