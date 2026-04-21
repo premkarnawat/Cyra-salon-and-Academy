@@ -7,6 +7,8 @@ export interface LeadEntry {
   dob: string;
   created_at: string;
   session_id?: string;
+  visit_count?: number;
+  last_visit_at?: string;
 }
 
 export interface Banner {
@@ -47,15 +49,17 @@ export interface Package {
   is_active: boolean;
   sort_order: number;
   created_at: string;
+  // ── Buy 1 Get 1 fields ──────────────────────────────────────────────────────
+  offer_type?: "normal" | "buy1get1";
+  b1g1_free_package?: string;   // name of the free package included
+  b1g1_details?: string;        // optional description of the free offer
 }
 
-// ─── RateCard (replaces old Service model) ───────────────────────────────────
-// One uploaded file (JPG / PNG / PDF) = one visual rate card poster on the site.
-// No hardcoded service names, prices, or categories — purely upload-driven.
+// ─── RateCard ────────────────────────────────────────────────────────────────
 export interface RateCard {
   id: string;
-  title?: string;        // optional caption shown below the card
-  file_url: string;      // public URL stored in Supabase storage (ratecard bucket)
+  title?: string;
+  file_url: string;
   file_type: "image" | "pdf";
   sort_order: number;
   created_at: string;
@@ -91,8 +95,6 @@ export interface SiteSettings {
   updated_at: string;
 }
 
-// ─── Settings Keys ───────────────────────────────────────────────────────────
-
 export interface SiteConfig {
   salon_name: string;
   tagline: string;
@@ -108,8 +110,6 @@ export interface SiteConfig {
   instagram_url: string;
   facebook_url: string;
 }
-
-// ─── Component Props ─────────────────────────────────────────────────────────
 
 export interface FormLockState {
   isLocked: boolean;
