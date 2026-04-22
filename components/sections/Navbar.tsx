@@ -3,14 +3,72 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Moon, Sun, MessageCircle, Home, Phone, Clock, MapPin } from "lucide-react";
+import Image from "next/image";
 import { useTheme } from "@/hooks/useTheme";
 import { NAV_LINKS } from "@/lib/constants";
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
 import type { SiteConfig } from "@/types";
 
+const NAV_ICONS: Record<string, string> = {
+  Home:"🏠", Offers:"🔥", Packages:"💎", Services:"✂️",
+  Gallery:"📸", Reviews:"⭐", Contact:"📍",
+};
+
 interface NavbarProps {
   config: SiteConfig;
   onExploreOffers?: () => void;
+}
+
+// ── Brand block — logo LEFT of text, text ALWAYS visible ─────────────────────
+// "Salon & Academy" is constrained to never exceed CYRA text width.
+function BrandBlock({
+  brandWord,
+  logoUrl,
+  showLogo,
+  size = "navbar",
+}: {
+  brandWord: string;
+  logoUrl?: string;
+  showLogo: boolean;
+  size?: "navbar" | "sidebar";
+}) {
+  const cyraSize   = size === "navbar"  ? "text-[1.3rem] sm:text-[1.45rem]" : "text-[1.75rem]";
+  const subSize    = size === "navbar"  ? "text-[0.38rem] sm:text-[0.42rem]" : "text-[0.52rem]";
+  const logoHeight = size === "navbar"  ? "h-8 sm:h-9" : "h-11";
+
+  return (
+    <div className="flex items-center gap-2.5 leading-none select-none">
+      {/* Logo — shown LEFT of text when logo_placement is navbar or both */}
+      {showLogo && logoUrl && (
+        <img
+          src={logoUrl}
+          alt="Cyra logo"
+          className={`${logoHeight} w-auto object-contain flex-shrink-0`}
+          draggable={false}
+        />
+      )}
+
+      {/* Text block — ALWAYS shown regardless of logo */}
+      <div className="flex flex-col items-start">
+        {/* CYRA */}
+        <span className={`font-cinzel ${cyraSize} tracking-[0.22em] text-[var(--gold-dark)] hover:text-[var(--gold)] transition-colors leading-none`}>
+          {brandWord}
+        </span>
+        {/*
+          "Salon & Academy" must fit inside CYRA width.
+          Achieved by: very tight letter-spacing + small font-size so the
+          rendered width of the subheading ≤ rendered width of CYRA.
+          Using inline style for pixel-precision control.
+        */}
+        <span
+          className={`font-marcellus ${subSize} uppercase text-[var(--gold)] opacity-65 mt-[3px] tracking-[0.38em] block`}
+          style={{ maxWidth: "100%", letterSpacing: "0.38em" }}
+        >
+          Salon &amp; Academy
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function Navbar({ config, onExploreOffers }: NavbarProps) {
@@ -36,7 +94,9 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
     }
   }
 
-  const brandWord = (config.salon_name || "Cyra Salon").split(" ")[0].toUpperCase();
+  const brandWord      = (config.salon_name || "Cyra Salon").split(" ")[0].toUpperCase();
+  const placement      = config.logo_placement ?? "none";
+  const showNavbarLogo = !!config.logo_url && (placement === "navbar" || placement === "both");
 
   return (
     <>
@@ -51,7 +111,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between gap-3">
 
-            {/* LEFT */}
+            {/* LEFT: Hamburger + Home */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <button onClick={() => setSidebarOpen(true)} aria-label="Open menu"
                 className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl border border-[rgba(191,160,106,0.3)] hover:border-[var(--gold)] hover:bg-[rgba(191,160,106,0.07)] transition-all">
@@ -65,32 +125,17 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
               </button>
             </div>
 
-            {/* CENTER — "CYRA" with constrained subheading */}
-            <button onClick={() => handleNavClick("#home")} className="flex flex-col items-center leading-none select-none" aria-label="Go home">
-              {/* Logo image if set */}
-              {config.logo_url ? (
-                <img src={config.logo_url} alt={brandWord} className="h-9 w-auto object-contain" />
-              ) : (
-                <>
-                  {/* CYRA heading */}
-                  <span className="font-cinzel text-[1.3rem] sm:text-[1.5rem] tracking-[0.22em] text-[var(--gold-dark)] hover:text-[var(--gold)] transition-colors leading-none">
-                    {brandWord}
-                  </span>
-                  {/*
-                    Fix: subheading is sized so it NEVER exceeds the width of CYRA.
-                    letter-spacing and font-size tuned to fit inside CYRA's visual width.
-                  */}
-                  <span
-                    className="font-marcellus uppercase text-[var(--gold)] opacity-70 mt-[3px] block"
-                    style={{ fontSize:"0.38rem", letterSpacing:"0.55em", maxWidth:"100%" }}
-                  >
-                    Salon &amp; Academy
-                  </span>
-                </>
-              )}
+            {/* CENTER: Logo (left) + Brand text (always visible) */}
+            <button onClick={() => handleNavClick("#home")} aria-label="Go home" className="flex-shrink-0">
+              <BrandBlock
+                brandWord={brandWord}
+                logoUrl={config.logo_url}
+                showLogo={showNavbarLogo}
+                size="navbar"
+              />
             </button>
 
-            {/* RIGHT */}
+            {/* RIGHT: Theme toggle + Book Now */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {mounted && (
                 <button onClick={toggle} aria-label="Toggle theme"
@@ -129,57 +174,53 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                   className="absolute top-5 right-5 w-9 h-9 rounded-xl border border-[rgba(191,160,106,0.2)] flex items-center justify-center text-[#6B7280] hover:text-[var(--gold-dark)] hover:border-[var(--gold)] transition-all">
                   <X size={15} strokeWidth={2}/>
                 </button>
-                {config.logo_url ? (
-                  <img src={config.logo_url} alt={brandWord} className="h-10 w-auto object-contain mb-2" />
-                ) : (
-                  <>
-                    <div className="font-cinzel text-[1.8rem] tracking-[0.2em] text-[var(--gold-dark)]">{brandWord}</div>
-                    <div className="font-marcellus text-[0.58rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mt-1">Salon &amp; Academy</div>
-                  </>
-                )}
+                <BrandBlock
+                  brandWord={brandWord}
+                  logoUrl={config.logo_url}
+                  showLogo={showNavbarLogo}
+                  size="sidebar"
+                />
                 <div className="mt-4 w-10 h-px bg-gradient-to-r from-[var(--gold)] to-transparent"/>
               </div>
 
-              {/* Nav — NO icons, larger font, better spacing */}
-              <nav className="flex-1 py-4 overflow-y-auto" aria-label="Site navigation">
-                <p className="px-7 mb-3 pt-1 text-[9px] tracking-[0.32em] uppercase text-[rgba(191,160,106,0.5)] font-semibold">Menu</p>
+              {/* Nav */}
+              <nav className="flex-1 py-3 overflow-y-auto" aria-label="Site navigation">
+                <p className="px-7 mb-2 pt-1 text-[9px] tracking-[0.32em] uppercase text-[rgba(191,160,106,0.5)] font-semibold">Menu</p>
                 {NAV_LINKS.map((link, i) => (
                   <motion.button key={link.href} onClick={() => handleNavClick(link.href)}
-                    className="w-full text-left flex items-center justify-between px-7 py-[15px] font-jost text-[15px] font-medium text-[#374151] hover:text-[var(--gold-dark)] hover:bg-[rgba(191,160,106,0.06)] border-l-[2.5px] border-transparent hover:border-[var(--gold)] transition-all"
+                    className="w-full text-left flex items-center gap-4 px-7 py-[13px] font-jost text-[14px] font-medium text-[#374151] hover:text-[var(--gold-dark)] hover:bg-[rgba(191,160,106,0.06)] border-l-[2.5px] border-transparent hover:border-[var(--gold)] transition-all"
                     initial={{ opacity:0, x:-16 }} animate={{ opacity:1, x:0 }}
                     transition={{ delay:i*0.045, duration:0.32 }}>
-                    {/* Label only — no emoji icons */}
                     <span>{link.label}</span>
                     {link.label === "Offers" && (
-                      <span className="text-[9px] bg-[var(--gold)] text-white px-2.5 py-[3px] rounded-full font-bold tracking-wide">LIVE</span>
+                      <span className="ml-auto text-[8.5px] bg-[var(--gold)] text-white px-2 py-[2px] rounded-full font-bold">LIVE</span>
                     )}
                   </motion.button>
                 ))}
               </nav>
 
-              {/* Bottom contact + WhatsApp — larger, more prominent */}
-              <div className="px-7 py-6 border-t border-[rgba(191,160,106,0.1)] bg-[rgba(191,160,106,0.03)]">
-                <div className="space-y-3 mb-5">
+              {/* Footer */}
+              <div className="px-7 py-6 border-t border-[rgba(191,160,106,0.1)] bg-[rgba(191,160,106,0.025)]">
+                <div className="space-y-2.5 mb-5">
                   {config.phone && (
-                    <a href={`tel:${config.phone}`} className="flex items-center gap-3 text-[14px] text-[#4B5563] hover:text-[var(--gold-dark)] transition-colors font-medium">
-                      <Phone size={14} className="text-[var(--gold)] flex-shrink-0"/>{config.phone}
+                    <a href={`tel:${config.phone}`} className="flex items-center gap-2.5 text-[13px] text-[#6B7280] hover:text-[var(--gold-dark)] transition-colors">
+                      <Phone size={13} className="text-[var(--gold)] flex-shrink-0"/><span className="font-medium">{config.phone}</span>
                     </a>
                   )}
                   {config.opening_hours && (
-                    <div className="flex items-center gap-3 text-[13px] text-[#6B7280]">
-                      <Clock size={13} className="text-[var(--gold)] flex-shrink-0"/>{config.opening_hours}
+                    <div className="flex items-center gap-2.5 text-[13px] text-[#6B7280]">
+                      <Clock size={13} className="text-[var(--gold)] flex-shrink-0"/><span>{config.opening_hours}</span>
                     </div>
                   )}
                   {config.address && (
-                    <div className="flex items-start gap-3 text-[13px] text-[#6B7280]">
+                    <div className="flex items-start gap-2.5 text-[13px] text-[#6B7280]">
                       <MapPin size={13} className="text-[var(--gold)] flex-shrink-0 mt-0.5"/><span className="leading-relaxed">{config.address}</span>
                     </div>
                   )}
                 </div>
-                {/* Larger, more prominent WhatsApp CTA */}
                 <a href={getWhatsAppLink(WHATSAPP_MESSAGES.general)} target="_blank" rel="noreferrer"
-                  className="flex items-center justify-center gap-2.5 w-full bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl px-4 py-4 text-[15px] font-bold transition-colors shadow-md">
-                  <MessageCircle size={17}/> Chat on WhatsApp
+                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1eb956] text-white rounded-xl px-4 py-4 text-[14px] font-bold transition-colors">
+                  <MessageCircle size={15}/> Chat on WhatsApp
                 </a>
               </div>
             </motion.aside>
