@@ -49,13 +49,11 @@ export interface Package {
   is_active: boolean;
   sort_order: number;
   created_at: string;
-  // ── Buy 1 Get 1 fields ──────────────────────────────────────────────────────
   offer_type?: "normal" | "buy1get1";
-  b1g1_free_package?: string;   // name of the free package included
-  b1g1_details?: string;        // optional description of the free offer
+  b1g1_free_package?: string;
+  b1g1_details?: string;
 }
 
-// ─── RateCard ────────────────────────────────────────────────────────────────
 export interface RateCard {
   id: string;
   title?: string;
@@ -109,6 +107,14 @@ export interface SiteConfig {
   footer_copyright: string;
   instagram_url: string;
   facebook_url: string;
+  /**
+   * Controls where the logo is displayed:
+   * "none"   — text only everywhere (default when no logo uploaded)
+   * "navbar" — logo appears only in navbar (left of CYRA text)
+   * "form"   — logo appears only at top of form popup
+   * "both"   — logo appears in both navbar and form
+   */
+  logo_placement?: "none" | "navbar" | "form" | "both";
 }
 
 export interface FormLockState {
