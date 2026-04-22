@@ -8,18 +8,28 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { adminFetch } from "@/lib/adminFetch";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
-import type { LeadEntry } from "@/types";
 
-interface LeadWithVisits extends LeadEntry {
-  visit_count?: number;
-  last_visit_at?: string;
-  visits?: { id: string; visited_at: string; session_id?: string }[];
+interface Visit {
+  id: string;
+  visited_at: string;
+  user_agent?: string;
+}
+
+interface UserEntry {
+  id: string;
+  name: string;
+  phone: string;
+  dob: string;
+  created_at: string;
+  visit_count: number;
+  last_visit_at: string;
+  visits: Visit[];
 }
 
 export default function LeadsPage() {
   const { token, loading:authLoading } = useAdminAuth();
-  const [leads,    setLeads]    = useState<LeadWithVisits[]>([]);
-  const [filtered, setFiltered] = useState<LeadWithVisits[]>([]);
+  const [users,    setUsers]    = useState<UserEntry[]>([]);
+  const [filtered, setFiltered] = useState<UserEntry[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [query,    setQuery]    = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -29,7 +39,7 @@ export default function LeadsPage() {
     setLoading(true);
     const res = await adminFetch("/api/admin/leads", { token });
     const d   = await res.json();
-    if (Array.isArray(d)) { setLeads(d); setFiltered(d); }
+    if (Array.isArray(d)) { setUsers(d); setFiltered(d); }
     setLoading(false);
   }
 
@@ -37,11 +47,13 @@ export default function LeadsPage() {
 
   useEffect(() => {
     const q = query.toLowerCase();
-    setFiltered(leads.filter(l => l.name.toLowerCase().includes(q) || l.contact.includes(q)));
-  }, [query, leads]);
+    setFiltered(users.filter(u =>
+      u.name.toLowerCase().includes(q) || u.phone.includes(q)
+    ));
+  }, [query, users]);
 
   async function del(id: string) {
-    if (!confirm("Delete this lead and all their visit records?")) return;
+    if (!confirm("Delete this user and all their visit records?")) return;
     await adminFetch("/api/admin/leads", { method:"DELETE", body:{ id }, token });
     toast.success("Deleted");
     load();
@@ -55,20 +67,29 @@ export default function LeadsPage() {
     });
   }
 
+  function formatTime(iso: string) {
+    return new Date(iso).toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+  }
+
   function exportCsv() {
     const rows = [
-      ["Name","Contact","DOB","First Visit","Total Visits","Last Visit"],
-      ...leads.map(l => [l.name, l.contact, l.dob, formatDate(l.created_at), String(l.visit_count||1), l.last_visit_at ? formatDate(l.last_visit_at) : "-"]),
+      ["Name","Phone","DOB","First Visit","Total Visits","Last Visit"],
+      ...users.map(u => [
+        u.name, u.phone, u.dob,
+        formatDate(u.created_at),
+        String(u.visit_count),
+        formatDate(u.last_visit_at),
+      ]),
     ];
     const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
     const a   = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type:"text/csv" })),
-      download: "cyra-leads.csv",
+      href: URL.createObjectURL(new Blob([csv],{type:"text/csv"})),
+      download: "cyra-users.csv",
     });
     a.click();
   }
 
-  const totalVisits = leads.reduce((acc, l) => acc + (l.visit_count || 1), 0);
+  const totalVisits = users.reduce((acc, u) => acc + u.visit_count, 0);
 
   return (
     <AdminLayout>
@@ -76,9 +97,9 @@ export default function LeadsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-[#111827]">Leads</h2>
+            <h2 className="text-xl font-semibold text-[#111827]">Users & Visits</h2>
             <p className="text-sm text-[#6B7280]">
-              {leads.length} unique users &nbsp;·&nbsp; {totalVisits} total visits
+              {users.length} unique users &nbsp;·&nbsp; {totalVisits} total visits
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -88,7 +109,7 @@ export default function LeadsPage() {
                 className="pl-8 pr-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-xl text-[#374151] outline-none focus:border-[var(--gold)] w-48 placeholder:text-[#9CA3AF]" />
             </div>
             <button onClick={exportCsv}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#E5E7EB] bg-white text-[#374151] text-xs font-medium hover:bg-[#F9FAFB] transition-colors">
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#E5E7EB] bg-white text-[#374151] text-xs font-medium hover:bg-[#F9FAFB]">
               <Download size={13}/> CSV
             </button>
           </div>
@@ -97,7 +118,7 @@ export default function LeadsPage() {
         {/* Table */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
           {(authLoading||loading) ? <LoadingSpinner /> : filtered.length===0 ? (
-            <div className="text-center py-12 text-[#9CA3AF] text-sm">No leads found</div>
+            <div className="text-center py-12 text-[#9CA3AF] text-sm">No users found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full admin-table">
@@ -105,86 +126,75 @@ export default function LeadsPage() {
                   <tr>
                     <th>#</th>
                     <th>Name</th>
-                    <th>Contact</th>
+                    <th>Phone</th>
                     <th>DOB</th>
                     <th>First Visit</th>
-                    <th>
-                      <div className="flex items-center gap-1">
-                        <Clock size={11}/> Visits
-                      </div>
-                    </th>
+                    <th className="flex items-center gap-1"><Clock size={11}/>Visits</th>
                     <th>Last Visit</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((l, i) => {
-                    const isOpen   = expanded.has(l.id);
-                    const visits   = l.visits || [];
-                    const vc       = l.visit_count || 1;
-
+                  {filtered.map((u, i) => {
+                    const isOpen = expanded.has(u.id);
                     return (
                       <>
-                        <tr key={l.id}>
+                        <tr key={u.id}>
                           <td className="text-[#9CA3AF] text-xs">{i+1}</td>
-                          <td className="font-medium text-[#111827]">{l.name}</td>
-                          <td className="text-[#374151]">{l.contact}</td>
-                          <td className="text-[#6B7280] text-xs">{l.dob}</td>
-                          <td className="text-[#9CA3AF] text-xs">{formatDate(l.created_at)}</td>
+                          <td className="font-medium text-[#111827]">{u.name}</td>
+                          <td className="text-[#374151]">{u.phone}</td>
+                          <td className="text-[#6B7280] text-xs">{u.dob}</td>
+                          <td className="text-[#9CA3AF] text-xs">{formatDate(u.created_at)}</td>
                           <td>
-                            {/* Visit count badge — click to expand */}
+                            {/* Visit count — click to expand timestamps */}
                             <button
-                              onClick={() => toggleExpand(l.id)}
+                              onClick={() => toggleExpand(u.id)}
                               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                                vc > 1
+                                u.visit_count > 1
                                   ? "bg-[rgba(191,160,106,0.12)] text-[var(--gold-dark)] hover:bg-[rgba(191,160,106,0.2)]"
                                   : "bg-[#F3F4F6] text-[#6B7280]"
                               }`}
                             >
-                              {vc} {vc===1?"visit":"visits"}
-                              {vc > 1 && (isOpen ? <ChevronUp size={11}/> : <ChevronDown size={11}/>)}
+                              {u.visit_count} {u.visit_count===1?"visit":"visits"}
+                              {u.visit_count > 1 && (isOpen ? <ChevronUp size={11}/> : <ChevronDown size={11}/>)}
                             </button>
                           </td>
-                          <td className="text-[#9CA3AF] text-xs">
-                            {l.last_visit_at ? formatDate(l.last_visit_at) : "-"}
-                          </td>
+                          <td className="text-[#9CA3AF] text-xs">{formatDate(u.last_visit_at)}</td>
                           <td>
                             <div className="flex items-center gap-2">
-                              <a href={`tel:${l.contact}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium border border-green-200 hover:bg-green-100">
+                              <a href={`tel:${u.phone}`}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium border border-green-200 hover:bg-green-100">
                                 <Phone size={11}/> Call
                               </a>
-                              <button onClick={()=>del(l.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-medium border border-red-200 hover:bg-red-100">
+                              <button onClick={()=>del(u.id)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-medium border border-red-200 hover:bg-red-100">
                                 <Trash2 size={11}/>
                               </button>
                             </div>
                           </td>
                         </tr>
 
-                        {/* Expandable visit timestamps row */}
-                        {isOpen && visits.length > 0 && (
-                          <tr key={`${l.id}-visits`} className="bg-[#FAFAFA]">
+                        {/* Expandable visit timestamps */}
+                        {isOpen && (
+                          <tr key={`${u.id}-v`} className="bg-[#FAFAFA]">
                             <td colSpan={8} className="px-6 py-3">
-                              <p className="text-[10px] font-semibold text-[var(--gold-dark)] uppercase tracking-widest mb-2">
-                                Visit History ({visits.length})
+                              <p className="text-[10px] font-bold text-[var(--gold-dark)] uppercase tracking-widest mb-2">
+                                Visit History ({u.visits.length})
                               </p>
-                              <div className="flex flex-wrap gap-2">
-                                {visits.map((v, vi) => (
-                                  <div key={v.id} className="flex items-center gap-1.5 bg-white border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#374151]">
-                                    <span className="text-[#9CA3AF]">#{vi+1}</span>
-                                    <Clock size={10} className="text-[var(--gold)]"/>
-                                    {formatDate(v.visited_at)} {new Date(v.visited_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}
-                                  </div>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-
-                        {/* If no detailed visit records but visit_count > 1 */}
-                        {isOpen && visits.length === 0 && vc > 1 && (
-                          <tr key={`${l.id}-novisits`} className="bg-[#FAFAFA]">
-                            <td colSpan={8} className="px-6 py-3 text-xs text-[#9CA3AF] italic">
-                              {vc} visits recorded. Detailed timestamps available for visits after the schema upgrade.
+                              {u.visits.length === 0 ? (
+                                <p className="text-xs text-[#9CA3AF] italic">No detailed records yet</p>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {u.visits.map((v, vi) => (
+                                    <div key={v.id}
+                                      className="flex items-center gap-1.5 bg-white border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#374151]">
+                                      <span className="text-[#9CA3AF] font-medium">#{vi+1}</span>
+                                      <Clock size={10} className="text-[var(--gold)]"/>
+                                      <span>{formatDate(v.visited_at)} {formatTime(v.visited_at)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         )}
