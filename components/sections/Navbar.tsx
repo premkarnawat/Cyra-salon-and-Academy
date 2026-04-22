@@ -33,7 +33,7 @@ function BrandBlock({
 }) {
   const cyraSize   = size === "navbar"  ? "text-[1.5rem] sm:text-[1.7rem]" : "text-[2rem]";
   const subSize    = size === "navbar"  ? "text-[0.45rem] sm:text-[0.5rem]" : "text-[0.6rem]";
-  const logoHeight = size === "navbar"  ? "h-9 sm:h-10" : "h-12";
+  const logoHeight = size === "navbar"  ? "h-12 sm:h-14" : "h-16";
 
   return (
     <div className="flex items-center gap-2.5 leading-none select-none">
@@ -60,13 +60,10 @@ function BrandBlock({
         <span
           className={`font-marcellus ${subSize} uppercase text-[var(--gold)] opacity-70 mt-[2px] block`}
           style={{
-            letterSpacing: "0.28em",
-            maxWidth: "85%",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
+            letterSpacing: "0.20em",   // 🔥 reduced so full text fits
+            whiteSpace: "nowrap",      // keep single line
+            }}
+          >
           SALON &amp; ACADEMY
         </span>
 
