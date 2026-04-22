@@ -19,9 +19,9 @@ import { DEFAULT_CONFIG }  from "@/lib/constants";
 import type { Banner, Offer, Package, RateCard, GalleryItem, Review } from "@/types";
 
 export default function HomePage() {
-  const [showOpening,    setShowOpening]    = useState(true);
-  const [mounted,        setMounted]        = useState(false);
-  const [showWelcome,    setShowWelcome]    = useState(false);
+  const [showOpening, setShowOpening] = useState(true);
+  const [mounted,     setMounted]     = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const [banners,   setBanners]   = useState<Banner[]>([]);
   const [offers,    setOffers]    = useState<Offer[]>([]);
@@ -39,11 +39,11 @@ export default function HomePage() {
     onFormSuccess,
   } = useFormLock();
 
-  // Show welcome banner for 5 seconds then auto-hide
+  // ── Welcome banner: show for EXACTLY 5 seconds then auto-hide ────────────
   useEffect(() => {
     if (isSubmitted && returningName && !showOpening) {
       setShowWelcome(true);
-      const t = setTimeout(() => setShowWelcome(false), 5000);
+      const t = setTimeout(() => setShowWelcome(false), 5000); // 5s exactly
       return () => clearTimeout(t);
     }
   }, [isSubmitted, returningName, showOpening]);
@@ -71,40 +71,43 @@ export default function HomePage() {
 
   if (!mounted) return null;
 
+  const placement = config.logo_placement ?? "none";
+
   return (
     <>
       {showOpening && (
         <OpeningScreen
           bgUrl={config.opening_bg_url || DEFAULT_CONFIG.opening_bg_url}
-          logoUrl={config.opening_logo_url}
+          logoUrl={config.opening_logo_url || config.logo_url}
           salonName={config.salon_name?.split(" ")[0] || "Cyra"}
           onComplete={handleOpeningComplete}
         />
       )}
 
-      {/* FormLockModal — receives logoUrl so it can replace the shield icon */}
+      {/* Pass logo_placement so FormLockModal knows whether to show logo */}
       <FormLockModal
         isOpen={isLocked && !isSubmitted}
         onSuccess={onFormSuccess}
-        logoUrl={config.logo_url || config.opening_logo_url || ""}
+        logoUrl={config.logo_url}
+        logoPlacement={placement}
       />
 
       <div className={`transition-opacity duration-700 ${showOpening ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
 
-        {/* Welcome back banner — shows 5 seconds then disappears */}
+        {/* Welcome back banner — 5 seconds then gone */}
         <AnimatePresence>
           {showWelcome && returningName && (
             <motion.div
               initial={{ opacity:0, y:-48 }}
               animate={{ opacity:1, y:0 }}
               exit={{ opacity:0, y:-48 }}
-              transition={{ duration:0.45, ease:[0.4,0,0.2,1] }}
+              transition={{ duration:0.4, ease:[0.4,0,0.2,1] }}
               className="fixed top-20 left-1/2 -translate-x-1/2 z-[800] pointer-events-none"
             >
               <div style={{
                 display:"flex", alignItems:"center", gap:10,
                 padding:"10px 20px", borderRadius:99,
-                background:"rgba(255,255,255,0.94)",
+                background:"rgba(255,255,255,0.96)",
                 backdropFilter:"blur(16px)",
                 border:"1px solid rgba(191,160,106,0.3)",
                 boxShadow:"0 8px 28px rgba(191,160,106,0.2)",
