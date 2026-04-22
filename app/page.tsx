@@ -2,25 +2,26 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { OpeningScreen }    from "@/components/animations/OpeningScreen";
-import { Navbar }           from "@/components/sections/Navbar";
-import { HeroBanner }       from "@/components/sections/HeroBanner";
-import { OffersSection }    from "@/components/sections/OffersSection";
-import { PackagesSection }  from "@/components/sections/PackagesSection";
-import { RateCardSection }  from "@/components/sections/RateCardSection";
-import { GallerySection }   from "@/components/sections/GallerySection";
-import { ReviewsSection }   from "@/components/sections/ReviewsSection";
-import { WhatsAppButton }   from "@/components/sections/WhatsAppButton";
-import { Footer }           from "@/components/sections/Footer";
-import { FormLockModal }    from "@/components/sections/FormLockModal";
-import { useFormLock }      from "@/hooks/useFormLock";
-import { useSiteSettings }  from "@/hooks/useSiteSettings";
-import { DEFAULT_CONFIG }   from "@/lib/constants";
+import { OpeningScreen }   from "@/components/animations/OpeningScreen";
+import { Navbar }          from "@/components/sections/Navbar";
+import { HeroBanner }      from "@/components/sections/HeroBanner";
+import { OffersSection }   from "@/components/sections/OffersSection";
+import { PackagesSection } from "@/components/sections/PackagesSection";
+import { RateCardSection } from "@/components/sections/RateCardSection";
+import { GallerySection }  from "@/components/sections/GallerySection";
+import { ReviewsSection }  from "@/components/sections/ReviewsSection";
+import { WhatsAppButton }  from "@/components/sections/WhatsAppButton";
+import { Footer }          from "@/components/sections/Footer";
+import { FormLockModal }   from "@/components/sections/FormLockModal";
+import { useFormLock }     from "@/hooks/useFormLock";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { DEFAULT_CONFIG }  from "@/lib/constants";
 import type { Banner, Offer, Package, RateCard, GalleryItem, Review } from "@/types";
 
 export default function HomePage() {
-  const [showOpening, setShowOpening] = useState(true);
-  const [mounted,     setMounted]     = useState(false);
+  const [showOpening,    setShowOpening]    = useState(true);
+  const [mounted,        setMounted]        = useState(false);
+  const [showWelcome,    setShowWelcome]    = useState(false);
 
   const [banners,   setBanners]   = useState<Banner[]>([]);
   const [offers,    setOffers]    = useState<Offer[]>([]);
@@ -37,6 +38,15 @@ export default function HomePage() {
     triggerByClick,
     onFormSuccess,
   } = useFormLock();
+
+  // Show welcome banner for 5 seconds then auto-hide
+  useEffect(() => {
+    if (isSubmitted && returningName && !showOpening) {
+      setShowWelcome(true);
+      const t = setTimeout(() => setShowWelcome(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [isSubmitted, returningName, showOpening]);
 
   useEffect(() => {
     setMounted(true);
@@ -72,36 +82,40 @@ export default function HomePage() {
         />
       )}
 
-      {/* Form — new signature: onSuccess(name, contact) */}
+      {/* FormLockModal — receives logoUrl so it can replace the shield icon */}
       <FormLockModal
         isOpen={isLocked && !isSubmitted}
         onSuccess={onFormSuccess}
+        logoUrl={config.logo_url || config.opening_logo_url || ""}
       />
 
       <div className={`transition-opacity duration-700 ${showOpening ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
 
-        {/* Welcome back banner for returning users */}
+        {/* Welcome back banner — shows 5 seconds then disappears */}
         <AnimatePresence>
-          {isSubmitted && returningName && !showOpening && (
+          {showWelcome && returningName && (
             <motion.div
-              initial={{ opacity:0, y:-40 }}
+              initial={{ opacity:0, y:-48 }}
               animate={{ opacity:1, y:0 }}
-              exit={{ opacity:0, y:-40 }}
-              transition={{ duration:0.5, delay:0.3 }}
+              exit={{ opacity:0, y:-48 }}
+              transition={{ duration:0.45, ease:[0.4,0,0.2,1] }}
               className="fixed top-20 left-1/2 -translate-x-1/2 z-[800] pointer-events-none"
             >
-              <div
-                className="flex items-center gap-2.5 px-5 py-2.5 rounded-full shadow-lg"
-                style={{
-                  background: "rgba(255,255,255,0.92)",
-                  backdropFilter: "blur(16px)",
-                  border: "1px solid rgba(191,160,106,0.3)",
-                  boxShadow: "0 8px 24px rgba(191,160,106,0.18)",
-                }}
-              >
-                <span style={{ fontSize:16 }}>✨</span>
-                <span className="font-jost text-[12px] font-medium text-[#5A4E3C] tracking-wide">
-                  Welcome back, <strong className="text-[var(--gold-dark)]">{returningName.split(" ")[0]}</strong>!
+              <div style={{
+                display:"flex", alignItems:"center", gap:10,
+                padding:"10px 20px", borderRadius:99,
+                background:"rgba(255,255,255,0.94)",
+                backdropFilter:"blur(16px)",
+                border:"1px solid rgba(191,160,106,0.3)",
+                boxShadow:"0 8px 28px rgba(191,160,106,0.2)",
+                whiteSpace:"nowrap",
+              }}>
+                <span style={{ fontSize:18 }}>✨</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:500, color:"#4B3C2A" }}>
+                  Welcome back,{" "}
+                  <strong style={{ color:"var(--gold-dark)", fontWeight:700 }}>
+                    {returningName.split(" ")[0]}
+                  </strong>!
                 </span>
               </div>
             </motion.div>
