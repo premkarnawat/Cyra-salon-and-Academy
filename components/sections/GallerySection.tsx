@@ -25,8 +25,8 @@ const SWIPE_MIN = 44;
 export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
   const list   = (gallery && gallery.length) ? gallery : FALLBACK;
   const total  = list.length;
-  const [cur,  setCur] = useState(0);
-  const [dir,  setDir] = useState(1);
+  const [cur,  setCur]  = useState(0);
+  const [dir,  setDir]  = useState(1);
   const dragX  = useMotionValue(0);
   const timer  = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -80,14 +80,26 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           />
         </FadeIn>
 
-        <div style={{ borderRadius:24, overflow:"hidden", boxShadow:"0 16px 60px rgba(0,0,0,0.1)", border:"1px solid rgba(191,160,106,0.12)", background:"#111", userSelect:"none" }}>
+        <div style={{
+          borderRadius:24, overflow:"hidden",
+          boxShadow:"0 16px 60px rgba(0,0,0,0.1)",
+          border:"1px solid rgba(191,160,106,0.12)",
+          background:"#000", // dark bg so letterboxing looks intentional
+          userSelect:"none",
+        }}>
 
           {/*
-            Dynamic height: tall enough for portrait images, but capped.
-            The key technique: blurred bg (same image, object-cover) fills letterbox gaps.
-            Main image uses object-contain so NOTHING is cropped.
+            GALLERY FIX:
+            - NO blur background layer (removed completely)
+            - Dynamic height responds to content: clamp(320px, 65vw, 700px)
+            - object-contain — shows FULL image, no cropping
+            - Portrait images will be tall and centred, landscape will be wide
+            - Black bg fills the "gap" areas cleanly (like a cinema screen)
           */}
-          <div style={{ position:"relative", overflow:"hidden", height:"clamp(320px,65vw,700px)" }}>
+          <div style={{
+            position:"relative", overflow:"hidden",
+            height:"clamp(320px,65vw,700px)",
+          }}>
             <AnimatePresence initial={false} custom={dir} mode="sync">
               <motion.div
                 key={item.id}
@@ -98,12 +110,18 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                 dragConstraints={{ left:0, right:0 }}
                 dragElastic={0.08}
                 onDragEnd={onDragEnd}
-                style={{ x:dragX, cursor:"grab", position:"absolute", inset:0, willChange:"transform" }}
+                style={{
+                  x: dragX, cursor:"grab",
+                  position:"absolute", inset:0,
+                  willChange:"transform",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}
                 whileDrag={{ cursor:"grabbing" }}
               >
                 {item.media_type === "video" ? (
-                  <div style={{ width:"100%", height:"100%", background:"#000", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <video src={item.media_url} style={{ width:"100%", height:"100%", objectFit:"contain" }}
+                  <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <video src={item.media_url}
+                      style={{ maxWidth:"100%", maxHeight:"100%", objectFit:"contain" }}
                       muted playsInline controls controlsList="nodownload" />
                     <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none" }}>
                       <div style={{ width:56, height:56, borderRadius:"50%", background:"rgba(255,255,255,0.18)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -114,52 +132,35 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
                 ) : (
                   <>
                     {/*
-                      GALLERY FIX:
-                      Layer 1 — Blurred background (same image, object-cover, zoomed).
-                                Fills any letterbox gaps for portrait OR landscape images.
-                      Layer 2 — Main sharp image (object-contain). Shows FULL image, no cropping.
-                      Result: Frame always full, image never cropped, no empty gaps.
+                      object-contain: shows the full image without any cropping.
+                      Portrait images show tall, landscape images show wide.
+                      No blur layer, no background fill tricks.
+                      The black container background fills any letterbox area cleanly.
                     */}
-
-                    {/* Blurred fill layer */}
-                    <div style={{ position:"absolute", inset:0, overflow:"hidden" }}>
-                      <Image
-                        src={item.media_url}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        style={{ transform:"scale(1.12)", filter:"blur(20px) brightness(0.55) saturate(0.7)" }}
-                        sizes="100vw"
-                        aria-hidden
-                        quality={30}
-                      />
-                    </div>
-
-                    {/* Main image — object-contain, no cropping */}
-                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      <Image
-                        src={item.media_url}
-                        alt={item.title || "Gallery"}
-                        fill
-                        className="object-contain"
-                        sizes="(max-width:640px) 100vw,(max-width:1280px) 95vw,1200px"
-                        priority={cur === 0}
-                        quality={90}
-                        draggable={false}
-                      />
-                    </div>
-
-                    {/* Gradient overlay */}
-                    <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 55%)", pointerEvents:"none" }} />
+                    <Image
+                      src={item.media_url}
+                      alt={item.title || "Gallery"}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width:640px) 100vw,(max-width:1280px) 95vw,1200px"
+                      priority={cur === 0}
+                      loading={cur === 0 ? "eager" : "lazy"} // lazy load all except first
+                      quality={90}
+                      draggable={false}
+                    />
+                    {/* Subtle gradient only at very bottom for text readability */}
+                    <div style={{ position:"absolute", bottom:0, left:0, right:0, height:100, background:"linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%)", pointerEvents:"none" }} />
                   </>
                 )}
 
                 {/* Bottom info */}
                 <div style={{ position:"absolute", bottom:0, left:0, right:0, padding:"clamp(12px,3vw,20px) clamp(16px,4vw,28px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", pointerEvents:"none" }}>
                   {item.title && (
-                    <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(1rem,2.5vw,1.4rem)", color:"#fff", textShadow:"0 1px 6px rgba(0,0,0,0.5)", margin:0 }}>{item.title}</p>
+                    <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(1rem,2.5vw,1.4rem)", color:"#fff", textShadow:"0 1px 6px rgba(0,0,0,0.7)", margin:0 }}>
+                      {item.title}
+                    </p>
                   )}
-                  <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6, background:"rgba(0,0,0,0.32)", backdropFilter:"blur(6px)", borderRadius:99, padding:"4px 12px" }}>
+                  <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6, background:"rgba(0,0,0,0.5)", backdropFilter:"blur(6px)", borderRadius:99, padding:"4px 12px" }}>
                     <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"rgba(255,255,255,0.85)" }}>{String(cur+1).padStart(2,"0")}</span>
                     <div style={{ width:12, height:1, background:"rgba(255,255,255,0.4)" }} />
                     <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"rgba(255,255,255,0.5)" }}>{String(total).padStart(2,"0")}</span>
@@ -170,15 +171,18 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           </div>
 
           {/* Progress bar */}
-          <div style={{ height:3, background:"rgba(191,160,106,0.12)" }}>
-            <motion.div key={cur}
+          <div style={{ height:3, background:"rgba(255,255,255,0.08)" }}>
+            <motion.div
+              key={cur}
               style={{ height:"100%", background:"linear-gradient(90deg,#8C6E30,#BFA06A,#D4B483)", transformOrigin:"left", willChange:"transform" }}
-              initial={{ scaleX:0 }} animate={{ scaleX:1 }}
-              transition={{ duration:AUTO_MS/1000, ease:"linear" }} />
+              initial={{ scaleX:0 }}
+              animate={{ scaleX:1 }}
+              transition={{ duration:AUTO_MS/1000, ease:"linear" }}
+            />
           </div>
         </div>
 
-        {/* Dots */}
+        {/* Dots — no arrow buttons */}
         <div style={{ marginTop:18, display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
           {list.map((_,i) => (
             <button key={i} onClick={() => goTo(i, i > cur ? 1 : -1)} aria-label={`Slide ${i+1}`}
