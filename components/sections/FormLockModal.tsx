@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, User, Phone, Calendar, ShieldCheck } from "lucide-react";
+import { Loader2, User, Phone, Calendar } from "lucide-react";
+import Image from "next/image";
 import toast from "react-hot-toast";
-import { getOrCreateSessionId } from "@/lib/utils";
+import { submitForm } from "@/lib/userTracking";
 
 interface FormLockModalProps {
   isOpen: boolean;
-  onSuccess: (name: string, contact: string) => void;
+  onSuccess: (name: string) => void;
+  logoUrl?: string; // from config.logo_url — replaces shield icon
 }
 
 function validatePhone(raw: string): boolean {
@@ -37,7 +39,6 @@ function Field({
 }) {
   const [focused, setFocused] = useState(false);
   const floated = focused || value.length > 0;
-
   return (
     <div className="relative">
       <div className={`relative rounded-2xl overflow-hidden transition-all duration-300 ${
@@ -48,11 +49,13 @@ function Field({
         <div className={`absolute inset-0 transition-colors duration-300 ${focused ? "bg-white/90" : "bg-white/60"}`}
           style={{ backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)" }} />
         <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-          <Icon size={15} strokeWidth={1.8} className={`transition-colors duration-300 ${focused ? "text-[var(--gold)]" : "text-[var(--gold-dark)]/40"}`} />
+          <Icon size={15} strokeWidth={1.8}
+            className={`transition-colors duration-300 ${focused ? "text-[var(--gold)]" : "text-[var(--gold-dark)]/40"}`} />
         </div>
         <label htmlFor={id} className={`absolute left-11 z-10 pointer-events-none font-jost transition-all duration-250 ${
-          floated ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold"
-          : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/60 tracking-wide"
+          floated
+            ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold"
+            : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/60 tracking-wide"
         }`}>{label}</label>
         <input
           id={id} type={type} value={value}
@@ -76,7 +79,7 @@ function Field({
   );
 }
 
-export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
+export function FormLockModal({ isOpen, onSuccess, logoUrl }: FormLockModalProps) {
   const [name,    setName]    = useState("");
   const [contact, setContact] = useState("");
   const [dob,     setDob]     = useState("");
@@ -87,54 +90,43 @@ export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      setTimeout(() => {
-        firstInputRef.current?.querySelector("input")?.focus();
-      }, 500);
+      setTimeout(() => firstInputRef.current?.querySelector("input")?.focus(), 500);
     }
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
   function handleDobChange(raw: string) {
     const digits = raw.replace(/\D/g, "").slice(0, 8);
-    let formatted = digits;
-    if (digits.length >= 3 && digits.length <= 4) formatted = `${digits.slice(0,2)}/${digits.slice(2)}`;
-    else if (digits.length >= 5) formatted = `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`;
-    setDob(formatted);
-    if (errors.dob) setErrors(e => ({ ...e, dob: "" }));
+    let fmt = digits;
+    if (digits.length >= 3 && digits.length <= 4) fmt = `${digits.slice(0,2)}/${digits.slice(2)}`;
+    else if (digits.length >= 5) fmt = `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`;
+    setDob(fmt);
+    if (errors.dob) setErrors(e => ({ ...e, dob:"" }));
   }
 
   function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-    if (!name.trim() || name.trim().length < 2) newErrors.name = "Please enter your full name";
-    if (!validatePhone(contact))                newErrors.contact = "Enter a valid 10-digit mobile number";
-    if (!parseDob(dob))                         newErrors.dob = "Enter date as DD/MM/YYYY";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: Record<string,string> = {};
+    if (!name.trim() || name.trim().length < 2) e.name = "Please enter your full name";
+    if (!validatePhone(contact))                e.contact = "Enter a valid 10-digit mobile number";
+    if (!parseDob(dob))                         e.dob = "Enter date as DD/MM/YYYY";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(ev: React.FormEvent) {
+    ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
     try {
       const parsed  = parseDob(dob)!;
-      const cleaned = contact.replace(/\D/g, "").replace(/^91/, "");
-      const res = await fetch("/api/lead-capture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name:       name.trim(),
-          contact:    cleaned,
-          dob:        parsed,
-          session_id: getOrCreateSessionId(),
-        }),
+      const result  = await submitForm({
+        name:    name.trim(),
+        contact: contact.replace(/\D/g,"").replace(/^91/,""),
+        dob:     parsed,
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
+      if (!result.success) throw new Error(result.error);
       toast.success("Welcome to Cyra Salon! ✨");
-      // Pass name + contact so useFormLock saves them to localStorage
-      onSuccess(name.trim(), cleaned);
+      onSuccess(name.trim()); // passes name up to useFormLock
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -150,15 +142,19 @@ export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
           initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
           transition={{ duration:0.4 }}
         >
-          <motion.div className="absolute inset-0" initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+          {/* Backdrop */}
+          <motion.div className="absolute inset-0"
+            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
             transition={{ duration:0.4 }}
             style={{ background:"rgba(250,246,239,0.65)", backdropFilter:"blur(18px) saturate(1.4)", WebkitBackdropFilter:"blur(18px) saturate(1.4)" }} />
 
+          {/* Gold orbs */}
           <div className="absolute top-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full pointer-events-none"
             style={{ background:"radial-gradient(circle,rgba(191,160,106,0.12) 0%,transparent 70%)", filter:"blur(40px)" }} aria-hidden />
           <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
             style={{ background:"radial-gradient(circle,rgba(191,160,106,0.1) 0%,transparent 70%)", filter:"blur(40px)" }} aria-hidden />
 
+          {/* Card */}
           <motion.div className="relative z-10 w-full max-w-[420px]"
             initial={{ scale:0.86, opacity:0, y:36 }} animate={{ scale:1, opacity:1, y:0 }}
             exit={{ scale:0.93, opacity:0, y:20 }}
@@ -169,9 +165,20 @@ export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
 
               <div className="px-7 sm:px-9 pt-8 pb-9">
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.22)] mb-5">
-                    <ShieldCheck size={22} strokeWidth={1.6} className="text-[var(--gold-dark)]" />
+                  {/* Logo replaces shield icon if set */}
+                  <div className="flex items-center justify-center mb-5">
+                    {logoUrl ? (
+                      <div className="relative w-16 h-16">
+                        <Image src={logoUrl} alt="Cyra" fill className="object-contain" unoptimized />
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.22)]">
+                        {/* Simple gold C mark when no logo */}
+                        <span className="font-cinzel text-xl text-[var(--gold-dark)] font-bold">C</span>
+                      </div>
+                    )}
                   </div>
+
                   <div className="font-cinzel text-[1.55rem] tracking-[0.22em] leading-none text-[var(--gold-dark)] mb-[5px]">CYRA</div>
                   <div className="font-marcellus text-[0.58rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mb-4">Salon &amp; Academy</div>
                   <div className="w-12 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-4" />
@@ -202,9 +209,7 @@ export function FormLockModal({ isOpen, onSuccess }: FormLockModalProps) {
 
                 <div className="mt-6 flex items-center justify-center gap-2">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[rgba(191,160,106,0.2)]" />
-                  <p className="text-[10.5px] font-jost text-[#8C7A5E]/50 tracking-wide px-3 text-center">
-                    🔒 Private &amp; secure · Not shared with anyone
-                  </p>
+                  <p className="text-[10.5px] font-jost text-[#8C7A5E]/50 tracking-wide px-3 text-center">🔒 Private &amp; secure · Not shared with anyone</p>
                   <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[rgba(191,160,106,0.2)]" />
                 </div>
               </div>
