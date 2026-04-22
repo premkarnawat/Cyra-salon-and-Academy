@@ -22,6 +22,109 @@ const FALLBACK: GalleryItem[] = [
 const AUTO_MS   = 10000;
 const SWIPE_MIN = 44;
 
+// ── Per-slide natural dimensions ──────────────────────────────────────────────
+// We detect each image's natural aspect ratio then resize the frame to match.
+// This way portrait images get a tall frame, landscape get a wide frame — no gaps.
+function useNaturalAspect(src: string, type: string) {
+  const [aspect, setAspect] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (type !== "image") return;
+    const img = new window.Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setAspect(img.naturalHeight / img.naturalWidth); // height / width ratio
+      }
+    };
+    img.src = src;
+  }, [src, type]);
+
+  return aspect;
+}
+
+// ── Single slide wrapper that sizes itself to the image ───────────────────────
+function SlideItem({
+  item,
+  priority,
+  dragX,
+  onDragEnd,
+  variants,
+  dir,
+}: {
+  item: GalleryItem;
+  priority: boolean;
+  dragX: ReturnType<typeof useMotionValue>;
+  onDragEnd: (_: unknown, info: { offset: { x: number } }) => void;
+  variants: Record<string, unknown>;
+  dir: number;
+}) {
+  const aspect = useNaturalAspect(item.media_url, item.media_type);
+
+  // Clamp aspect ratio: min 9:16 (portrait) → max 16:9 (landscape)
+  // Converts to padding-top % for CSS aspect-ratio trick
+  const clampedRatio = aspect
+    ? Math.min(Math.max(aspect, 0.5625), 1.7778) // 9/16 to 16/9
+    : 0.5625; // default to 16:9 while loading
+
+  return (
+    <motion.div
+      custom={dir}
+      variants={variants as Parameters<typeof motion.div>[0]["variants"]}
+      initial="enter" animate="center" exit="exit"
+      drag="x"
+      dragConstraints={{ left:0, right:0 }}
+      dragElastic={0.08}
+      onDragEnd={onDragEnd}
+      style={{ x: dragX, cursor:"grab", willChange:"transform" }}
+      whileDrag={{ cursor:"grabbing" }}
+      className="w-full"
+    >
+      {item.media_type === "video" ? (
+        <div className="relative w-full" style={{ paddingTop:"56.25%" }}>
+          <div className="absolute inset-0">
+            <video src={item.media_url} className="w-full h-full object-cover" muted playsInline controls controlsList="nodownload" />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div style={{ width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,0.18)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <Play size={22} style={{ color:"#fff", marginLeft:3 }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /*
+          Dynamic frame — padding-top % = aspect ratio (h/w × 100)
+          Frame adjusts TO the image, not the other way around.
+          object-cover fills the frame completely — NO black sides, NO gaps.
+        */
+        <div className="relative w-full overflow-hidden rounded-t-3xl" style={{ paddingTop:`${clampedRatio * 100}%` }}>
+          <Image
+            src={item.media_url}
+            alt={item.title || "Gallery"}
+            fill
+            className="object-cover"
+            sizes="(max-width:640px) 100vw,(max-width:1280px) 95vw,1200px"
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            quality={90}
+            draggable={false}
+          />
+          {/* Gradient overlay for title readability only */}
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, height:90, background:"linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 100%)", pointerEvents:"none" }} />
+
+          {/* Title */}
+          {item.title && (
+            <div style={{ position:"absolute", bottom:0, left:0, right:0, padding:"0 20px 16px", pointerEvents:"none" }}>
+              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(1rem,2.5vw,1.3rem)", color:"#fff", textShadow:"0 1px 6px rgba(0,0,0,0.6)", margin:0 }}>
+                {item.title}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
   const list   = (gallery && gallery.length) ? gallery : FALLBACK;
   const total  = list.length;
@@ -80,98 +183,48 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           />
         </FadeIn>
 
+        {/*
+          Outer wrapper: white bg, rounded, shadow.
+          NO fixed height — the inner slide controls its own height dynamically.
+          This means portrait images make the container taller, landscape makes it shorter.
+          Frame always perfectly matches the image. No black gaps. No blur background.
+        */}
         <div style={{
-          borderRadius:24, overflow:"hidden",
+          borderRadius:24,
+          overflow:"hidden",
           boxShadow:"0 16px 60px rgba(0,0,0,0.1)",
           border:"1px solid rgba(191,160,106,0.12)",
-          background:"#000", // dark bg so letterboxing looks intentional
+          background:"#F8F9FB",
           userSelect:"none",
         }}>
-
-          {/*
-            GALLERY FIX:
-            - NO blur background layer (removed completely)
-            - Dynamic height responds to content: clamp(320px, 65vw, 700px)
-            - object-contain — shows FULL image, no cropping
-            - Portrait images will be tall and centred, landscape will be wide
-            - Black bg fills the "gap" areas cleanly (like a cinema screen)
-          */}
-          <div style={{
-            position:"relative", overflow:"hidden",
-            height:"clamp(320px,65vw,700px)",
-          }}>
-            <AnimatePresence initial={false} custom={dir} mode="sync">
-              <motion.div
+          <div style={{ overflow:"hidden" }}>
+            <AnimatePresence initial={false} custom={dir} mode="wait">
+              <SlideItem
                 key={item.id}
-                custom={dir}
-                variants={variants}
-                initial="enter" animate="center" exit="exit"
-                drag="x"
-                dragConstraints={{ left:0, right:0 }}
-                dragElastic={0.08}
+                item={item}
+                priority={cur === 0}
+                dragX={dragX}
                 onDragEnd={onDragEnd}
-                style={{
-                  x: dragX, cursor:"grab",
-                  position:"absolute", inset:0,
-                  willChange:"transform",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                }}
-                whileDrag={{ cursor:"grabbing" }}
-              >
-                {item.media_type === "video" ? (
-                  <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <video src={item.media_url}
-                      style={{ maxWidth:"100%", maxHeight:"100%", objectFit:"contain" }}
-                      muted playsInline controls controlsList="nodownload" />
-                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none" }}>
-                      <div style={{ width:56, height:56, borderRadius:"50%", background:"rgba(255,255,255,0.18)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <Play size={22} style={{ color:"#fff", marginLeft:3 }} />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/*
-                      object-contain: shows the full image without any cropping.
-                      Portrait images show tall, landscape images show wide.
-                      No blur layer, no background fill tricks.
-                      The black container background fills any letterbox area cleanly.
-                    */}
-                    <Image
-                      src={item.media_url}
-                      alt={item.title || "Gallery"}
-                      fill
-                      className="object-contain"
-                      sizes="(max-width:640px) 100vw,(max-width:1280px) 95vw,1200px"
-                      priority={cur === 0}
-                      loading={cur === 0 ? "eager" : "lazy"} // lazy load all except first
-                      quality={90}
-                      draggable={false}
-                    />
-                    {/* Subtle gradient only at very bottom for text readability */}
-                    <div style={{ position:"absolute", bottom:0, left:0, right:0, height:100, background:"linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%)", pointerEvents:"none" }} />
-                  </>
-                )}
-
-                {/* Bottom info */}
-                <div style={{ position:"absolute", bottom:0, left:0, right:0, padding:"clamp(12px,3vw,20px) clamp(16px,4vw,28px)", display:"flex", alignItems:"flex-end", justifyContent:"space-between", pointerEvents:"none" }}>
-                  {item.title && (
-                    <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(1rem,2.5vw,1.4rem)", color:"#fff", textShadow:"0 1px 6px rgba(0,0,0,0.7)", margin:0 }}>
-                      {item.title}
-                    </p>
-                  )}
-                  <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6, background:"rgba(0,0,0,0.5)", backdropFilter:"blur(6px)", borderRadius:99, padding:"4px 12px" }}>
-                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"rgba(255,255,255,0.85)" }}>{String(cur+1).padStart(2,"0")}</span>
-                    <div style={{ width:12, height:1, background:"rgba(255,255,255,0.4)" }} />
-                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"rgba(255,255,255,0.5)" }}>{String(total).padStart(2,"0")}</span>
-                  </div>
-                </div>
-              </motion.div>
+                variants={variants}
+                dir={dir}
+              />
             </AnimatePresence>
           </div>
 
+          {/* Counter bar */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 20px" }}>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:14, color:"#6B7280" }}>
+              {item.title || ""}
+            </span>
+            <div style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(0,0,0,0.06)", borderRadius:99, padding:"4px 12px" }}>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"#374151" }}>{String(cur+1).padStart(2,"0")}</span>
+              <div style={{ width:12, height:1, background:"rgba(0,0,0,0.2)" }} />
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:"#9CA3AF" }}>{String(total).padStart(2,"0")}</span>
+            </div>
+          </div>
+
           {/* Progress bar */}
-          <div style={{ height:3, background:"rgba(255,255,255,0.08)" }}>
+          <div style={{ height:3, background:"rgba(191,160,106,0.12)" }}>
             <motion.div
               key={cur}
               style={{ height:"100%", background:"linear-gradient(90deg,#8C6E30,#BFA06A,#D4B483)", transformOrigin:"left", willChange:"transform" }}
@@ -182,10 +235,10 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
           </div>
         </div>
 
-        {/* Dots — no arrow buttons */}
+        {/* Dots */}
         <div style={{ marginTop:18, display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
           {list.map((_,i) => (
-            <button key={i} onClick={() => goTo(i, i > cur ? 1 : -1)} aria-label={`Slide ${i+1}`}
+            <button key={i} onClick={() => goTo(i, i>cur?1:-1)} aria-label={`Slide ${i+1}`}
               style={{ borderRadius:99, height:8, width:i===cur?28:8, background:i===cur?"var(--gold)":"rgba(191,160,106,0.28)", border:"none", cursor:"pointer", transition:"all 0.3s ease", padding:0 }} />
           ))}
         </div>
