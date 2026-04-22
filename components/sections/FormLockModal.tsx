@@ -68,14 +68,13 @@ function Field({ id, label, type, value, onChange, placeholder, icon:Icon, maxLe
 }
 
 export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: FormLockModalProps) {
-  const [name,    setName]    = useState("");
+  const [name, setName] = useState("");
   const [contact, setContact] = useState("");
-  const [dob,     setDob]     = useState("");
+  const [dob, setDob] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors,  setErrors]  = useState<Record<string,string>>({});
+  const [errors, setErrors] = useState<Record<string,string>>({});
   const firstRef = useRef<HTMLDivElement>(null);
 
-  // Show logo in form when placement is "form" or "both"
   const showFormLogo = !!logoUrl && (logoPlacement === "form" || logoPlacement === "both");
 
   useEffect(() => {
@@ -98,8 +97,8 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
   function validate(): boolean {
     const e: Record<string,string> = {};
     if (!name.trim()||name.trim().length<2) e.name="Please enter your full name";
-    if (!validatePhone(contact))            e.contact="Enter a valid 10-digit mobile number";
-    if (!parseDob(dob))                     e.dob="Enter date as DD/MM/YYYY";
+    if (!validatePhone(contact)) e.contact="Enter a valid 10-digit mobile number";
+    if (!parseDob(dob)) e.dob="Enter date as DD/MM/YYYY";
     setErrors(e);
     return Object.keys(e).length===0;
   }
@@ -111,15 +110,15 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
     try {
       const parsed = parseDob(dob)!;
       const result = await submitForm({
-        name:    name.trim(),
+        name: name.trim(),
         contact: contact.replace(/\D/g,"").replace(/^91/,""),
-        dob:     parsed,
+        dob: parsed,
       });
       if (!result.success) throw new Error(result.error);
       toast.success("Welcome to Cyra Salon! ✨");
       onSuccess(name.trim());
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -129,80 +128,60 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
     <AnimatePresence>
       {isOpen && (
         <motion.div className="fixed inset-0 z-[8000] flex items-center justify-center p-4"
-          initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-          transition={{duration:0.4}}>
+          initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
 
           <motion.div className="absolute inset-0"
-            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-            transition={{duration:0.4}}
-            style={{background:"rgba(250,246,239,0.65)",backdropFilter:"blur(18px) saturate(1.4)",WebkitBackdropFilter:"blur(18px) saturate(1.4)"}} />
-
-          <div className="absolute top-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full pointer-events-none"
-            style={{background:"radial-gradient(circle,rgba(191,160,106,0.12) 0%,transparent 70%)",filter:"blur(40px)"}} aria-hidden />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
-            style={{background:"radial-gradient(circle,rgba(191,160,106,0.1) 0%,transparent 70%)",filter:"blur(40px)"}} aria-hidden />
+            style={{background:"rgba(250,246,239,0.65)",backdropFilter:"blur(18px)"}} />
 
           <motion.div className="relative z-10 w-full max-w-[420px]"
-            initial={{scale:0.86,opacity:0,y:36}} animate={{scale:1,opacity:1,y:0}}
-            exit={{scale:0.93,opacity:0,y:20}}
-            transition={{duration:0.5,ease:[0.175,0.885,0.32,1.275]}}>
-            <div className="rounded-[28px] overflow-hidden shadow-[0_32px_80px_rgba(140,110,48,0.18),0_8px_32px_rgba(0,0,0,0.08)]"
-              style={{background:"rgba(255,255,255,0.82)",backdropFilter:"blur(32px) saturate(1.6)",WebkitBackdropFilter:"blur(32px) saturate(1.6)",border:"1px solid rgba(191,160,106,0.25)"}}>
-              <div className="h-[3px] w-full bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
+            initial={{scale:0.86,opacity:0,y:36}} animate={{scale:1,opacity:1,y:0}}>
 
-              <div className="px-7 sm:px-9 pt-8 pb-9">
-                <div className="text-center mb-8">
+            <div className="rounded-[28px] overflow-hidden shadow-xl bg-white border">
 
-                  {/* Logo above brand text — shown when placement is form/both */}
-                  {showFormLogo && (
-                    <div className="flex items-center justify-center mb-4">
-                      <img
-                        src={logoUrl}
-                        alt="Cyra"
-                        style={{ height:64, width:"auto", objectFit:"contain" }}
-                        draggable={false}
-                      />
-                    </div>
-                  )}
+              <div className="px-7 pt-8 pb-9 text-center">
 
-                  {/* Brand text — ALWAYS shown */}
-                  <div className="font-cinzel text-[1.55rem] tracking-[0.22em] leading-none text-[var(--gold-dark)] mb-[5px]">
+                {/* LOGO */}
+                {showFormLogo && (
+                  <img src={logoUrl} className="mx-auto mb-4 h-16 object-contain" />
+                )}
+
+                {/* 🔥 FIXED BRAND */}
+                <div className="flex flex-col items-center">
+                  <span className="font-cinzel text-[1.9rem] tracking-[0.22em] text-[var(--gold-dark)]">
                     CYRA
-                  </div>
-                  <div className="font-marcellus text-[0.58rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mb-4">
-                    Salon &amp; Academy
-                  </div>
-
-                  <div className="w-12 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-4" />
-                  <p className="font-cormorant text-[1.15rem] text-[#3D3527] leading-snug mb-1">Welcome! Please introduce yourself</p>
-                  <p className="font-jost text-[12px] text-[#8C7A5E]/70 tracking-wide">Takes just 10 seconds · Only once, ever</p>
+                  </span>
+                  <span
+                    className="font-marcellus uppercase text-[var(--gold)] opacity-70 mt-[3px]"
+                    style={{
+                      fontSize:"0.55rem",
+                      letterSpacing:"0.28em",
+                      maxWidth:"75%",
+                      textAlign:"center",
+                    }}
+                  >
+                    SALON & ACADEMY
+                  </span>
                 </div>
 
-                <form onSubmit={handleSubmit} noValidate className="space-y-4">
-                  <div ref={firstRef}>
-                    <Field id="fl-name" label="Your Full Name" type="text" value={name}
-                      onChange={v=>{setName(v);if(errors.name)setErrors(e=>({...e,name:""}));}}
-                      placeholder="e.g. Priya Sharma" icon={User} error={errors.name} />
-                  </div>
-                  <Field id="fl-contact" label="Mobile Number" type="tel" value={contact}
-                    onChange={v=>{setContact(v);if(errors.contact)setErrors(e=>({...e,contact:""}));}}
-                    placeholder="10-digit mobile number" icon={Phone} maxLength={10} inputMode="numeric" error={errors.contact} />
-                  <Field id="fl-dob" label="Date of Birth" type="text" value={dob}
-                    onChange={handleDobChange} placeholder="DD/MM/YYYY" icon={Calendar}
-                    maxLength={10} inputMode="numeric" error={errors.dob} />
+                <p className="mt-4 text-sm">Welcome! Please introduce yourself</p>
 
-                  <motion.button type="submit" disabled={loading}
-                    whileHover={loading?{}:{scale:1.02,y:-2}} whileTap={loading?{}:{scale:0.98}}
-                    className="btn-gold w-full mt-2 py-[15px] rounded-2xl text-[11.5px] tracking-[0.26em] flex items-center justify-center gap-2.5 shadow-[0_8px_28px_rgba(191,160,106,0.35)] hover:shadow-[0_12px_36px_rgba(191,160,106,0.45)] disabled:opacity-60 disabled:cursor-not-allowed transition-shadow duration-300">
-                    {loading?<><Loader2 size={15} className="animate-spin"/> Please wait…</>:<>Proceed Ahead &nbsp;→</>}
-                  </motion.button>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-5">
+                  <div ref={firstRef}>
+                    <Field id="name" label="Your Name" type="text" value={name}
+                      onChange={setName} placeholder="Name" icon={User} error={errors.name} />
+                  </div>
+
+                  <Field id="contact" label="Mobile" type="tel" value={contact}
+                    onChange={setContact} placeholder="Mobile" icon={Phone} error={errors.contact} />
+
+                  <Field id="dob" label="DOB" type="text" value={dob}
+                    onChange={handleDobChange} placeholder="DD/MM/YYYY" icon={Calendar} error={errors.dob} />
+
+                  <button type="submit" className="btn-gold w-full py-3 rounded-xl">
+                    {loading ? "Loading..." : "Continue"}
+                  </button>
                 </form>
 
-                <div className="mt-6 flex items-center justify-center gap-2">
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[rgba(191,160,106,0.2)]" />
-                  <p className="text-[10.5px] font-jost text-[#8C7A5E]/50 tracking-wide px-3 text-center">🔒 Private &amp; secure · Not shared with anyone</p>
-                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[rgba(191,160,106,0.2)]" />
-                </div>
               </div>
             </div>
           </motion.div>
