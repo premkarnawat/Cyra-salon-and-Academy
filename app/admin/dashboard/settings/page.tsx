@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Save, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -26,10 +27,13 @@ const BODY_FONTS=[
   {value:"Nunito",label:"Nunito",sample:"Salon & Academy"},
 ];
 
-type Tab="general"|"opening"|"fonts"|"social";
+type Tab="logo"|"general"|"opening"|"fonts"|"social";
 const TABS:{ id:Tab;label:string }[]=[
-  {id:"general",label:"General"},{id:"opening",label:"Opening"},
-  {id:"fonts",label:"Fonts"},{id:"social",label:"Social"},
+  {id:"logo",    label:"🖼 Logo"},
+  {id:"general", label:"General"},
+  {id:"opening", label:"Opening"},
+  {id:"fonts",   label:"Fonts"},
+  {id:"social",  label:"Social"},
 ];
 
 export default function SettingsPage() {
@@ -37,7 +41,7 @@ export default function SettingsPage() {
   const [config,  setConfig]  = useState<ExtConfig>(DEFAULT_CONFIG as ExtConfig);
   const [loading, setLoading] = useState(true);
   const [saving,  setSaving]  = useState(false);
-  const [tab,     setTab]     = useState<Tab>("general");
+  const [tab,     setTab]     = useState<Tab>("logo");
 
   useEffect(() => {
     fetch("/api/settings").then(r=>r.json())
@@ -75,20 +79,78 @@ export default function SettingsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-0 border-b border-[#E5E7EB]">
+        <div className="flex gap-0 border-b border-[#E5E7EB] overflow-x-auto">
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-all ${tab===t.id?"border-[var(--gold)] text-[var(--gold-dark)]":"border-transparent text-[#6B7280] hover:text-[#374151]"}`}>
-              {t.label}
-            </button>
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap ${
+                tab===t.id?"border-[var(--gold)] text-[var(--gold-dark)]":"border-transparent text-[#6B7280] hover:text-[#374151]"
+              }`}>{t.label}</button>
           ))}
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-6">
 
+          {/* ── LOGO TAB — controls header logo + form logo ── */}
+          {tab==="logo" && (
+            <div className="space-y-6">
+              <h3 className="font-semibold text-[#111827]">Logo Settings</h3>
+              <p className="text-sm text-[#6B7280] -mt-3 leading-relaxed">
+                The logo you upload here will appear in the <strong>header navbar</strong> and at the top of the <strong>form popup</strong>, replacing the default text or shield icon.
+              </p>
+
+              {/* Live preview */}
+              {config.logo_url && (
+                <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+                  <p className="text-[10px] tracking-widest uppercase text-[#9CA3AF] mb-3">Current Logo</p>
+                  <div className="flex items-center gap-6 flex-wrap">
+                    {/* Header preview */}
+                    <div>
+                      <p className="text-[10px] text-[#9CA3AF] mb-1.5">Header (h-9)</p>
+                      <img src={config.logo_url} alt="Logo" className="h-9 w-auto object-contain" />
+                    </div>
+                    {/* Form preview */}
+                    <div>
+                      <p className="text-[10px] text-[#9CA3AF] mb-1.5">Form (h-16 w-16)</p>
+                      <div className="relative w-16 h-16">
+                        <Image src={config.logo_url} alt="Logo" fill className="object-contain" unoptimized />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className={lbl}>Logo Image</label>
+                <p className="text-xs text-[#9CA3AF] mb-2">Upload PNG with transparent background for best results. Recommended: 400×200px or square.</p>
+                <ImageUpload
+                  value={config.logo_url}
+                  onChange={url => set("logo_url", url)}
+                  bucket="settings"
+                  folder="logo"
+                  label="Upload Logo (PNG / SVG / WebP)"
+                />
+              </div>
+
+              {config.logo_url && (
+                <button
+                  type="button"
+                  onClick={() => set("logo_url", "")}
+                  className="text-xs text-red-500 hover:text-red-600 underline"
+                >
+                  Remove logo (use text fallback)
+                </button>
+              )}
+
+              <div className="rounded-xl bg-[rgba(191,160,106,0.06)] border border-[rgba(191,160,106,0.2)] p-3 text-xs text-[#6B7280] leading-relaxed">
+                💡 <strong>Tip:</strong> After saving, the logo will appear in the navbar and replace the lock icon in the form. If no logo is uploaded, the text "CYRA" is shown instead.
+              </div>
+            </div>
+          )}
+
+          {/* ── GENERAL ── */}
           {tab==="general" && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#111827] mb-4">General Information</h3>
+              <h3 className="font-semibold text-[#111827]">General Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {([["salon_name","Salon Name"],["tagline","Tagline"],["phone","Phone"],["whatsapp","WhatsApp (no +)"],["email","Email","email"],["opening_hours","Opening Hours"]] as [keyof ExtConfig,string,string?][]).map(([k,l,t])=>(
                   <div key={k}><label className={lbl}>{l}</label>
@@ -100,19 +162,21 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* ── OPENING ── */}
           {tab==="opening" && (
             <div className="space-y-5">
               <h3 className="font-semibold text-[#111827]">Opening Screen</h3>
               <p className="text-sm text-[#6B7280] -mt-2">The full-screen intro users see on first load.</p>
               <div><label className={lbl}>Background Image</label>
                 <ImageUpload value={config.opening_bg_url} onChange={url=>set("opening_bg_url",url)} bucket="settings" folder="opening" label="Upload Background Photo"/></div>
-              <div><label className={lbl}>Logo (leave empty for text logo)</label>
-                <ImageUpload value={config.opening_logo_url} onChange={url=>set("opening_logo_url",url)} bucket="settings" folder="logo" label="Upload Logo (PNG transparent)"/></div>
-              <div><label className={lbl}>Brand Name Text</label>
+              <div><label className={lbl}>Opening Logo (optional — uses Logo tab setting if empty)</label>
+                <ImageUpload value={config.opening_logo_url} onChange={url=>set("opening_logo_url",url)} bucket="settings" folder="logo" label="Upload Opening Screen Logo"/></div>
+              <div><label className={lbl}>Brand Name Text (shown if no logo)</label>
                 <input value={config.salon_name||""} onChange={e=>set("salon_name",e.target.value)} className={inp}/></div>
             </div>
           )}
 
+          {/* ── FONTS ── */}
           {tab==="fonts" && (
             <div className="space-y-6">
               <h3 className="font-semibold text-[#111827]">Typography</h3>
@@ -122,7 +186,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {BRAND_FONTS.map(f=>(
                     <button key={f.value} type="button" onClick={()=>set("brand_font",f.value)}
-                      className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${config.brand_font===f.value?"border-[var(--gold)] bg-[var(--gold-pale)]/20":"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)]"}`}>
+                      className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${(config as ExtConfig).brand_font===f.value?"border-[var(--gold)] bg-[var(--gold-pale)]/20":"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)]"}`}>
                       <span className="text-xl text-[#111827] mb-0.5" style={{fontFamily:`'${f.value}',serif`}}>{f.sample}</span>
                       <span className="text-[10px] text-[#9CA3AF]">{f.label}</span>
                     </button>
@@ -135,26 +199,26 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {BODY_FONTS.map(f=>(
                     <button key={f.value} type="button" onClick={()=>set("body_font",f.value)}
-                      className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${config.body_font===f.value?"border-[var(--gold)] bg-[var(--gold-pale)]/20":"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)]"}`}>
+                      className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${(config as ExtConfig).body_font===f.value?"border-[var(--gold)] bg-[var(--gold-pale)]/20":"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)]"}`}>
                       <span className="text-sm text-[#374151] mb-0.5" style={{fontFamily:`'${f.value}',sans-serif`}}>{f.sample}</span>
                       <span className="text-[10px] text-[#9CA3AF]">{f.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
-              {/* Preview */}
               <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
                 <p className="text-[9px] tracking-widest uppercase text-[#9CA3AF] mb-2">Preview</p>
-                <div className="text-2xl text-[var(--gold-dark)]" style={{fontFamily:config.brand_font?`'${config.brand_font}',serif`:undefined}}>
+                <div className="text-2xl text-[var(--gold-dark)]" style={{fontFamily:(config as ExtConfig).brand_font?`'${(config as ExtConfig).brand_font}',serif`:undefined}}>
                   {config.salon_name?.split(" ")[0]?.toUpperCase()||"CYRA"}
                 </div>
-                <div className="text-xs text-[#6B7280] tracking-widest mt-1" style={{fontFamily:config.body_font?`'${config.body_font}',sans-serif`:undefined}}>
+                <div className="text-xs text-[#6B7280] tracking-widest mt-1" style={{fontFamily:(config as ExtConfig).body_font?`'${(config as ExtConfig).body_font}',sans-serif`:undefined}}>
                   Salon &amp; Academy
                 </div>
               </div>
             </div>
           )}
 
+          {/* ── SOCIAL ── */}
           {tab==="social" && (
             <div className="space-y-4">
               <h3 className="font-semibold text-[#111827]">Social & Footer</h3>
