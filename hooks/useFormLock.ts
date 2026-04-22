@@ -1,40 +1,40 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  isFormSubmitted,
-  markFormSubmitted,
-  getReturningUserName,
-} from "@/lib/utils";
+import { checkUser, logVisit, getStoredUserName } from "@/lib/userTracking";
 
 export function useFormLock() {
-  const [isLocked,       setIsLocked]       = useState(false);
-  const [isSubmitted,    setIsSubmitted]     = useState(false);
-  const [returningName,  setReturningName]   = useState<string | null>(null);
+  const [isLocked,      setIsLocked]      = useState(false);
+  const [isSubmitted,   setIsSubmitted]   = useState(false);
+  const [returningName, setReturningName] = useState<string | null>(null);
   const triggeredRef = useRef(false);
 
   useEffect(() => {
-    // Check localStorage — returning user skips form entirely
-    if (isFormSubmitted()) {
+    const userId = checkUser(); // reads localStorage
+
+    if (userId) {
+      // ── RETURNING USER ──────────────────────────────────────────────────────
+      // Skip form entirely, log this visit silently
       setIsSubmitted(true);
-      setReturningName(getReturningUserName());
+      setReturningName(getStoredUserName());
+      logVisit(userId); // fire-and-forget, never blocks UI
       return;
     }
 
-    // Scroll trigger — fires once after user scrolls ~80vh
-    const SCROLL_THRESHOLD =
+    // ── NEW USER — set up scroll trigger ────────────────────────────────────
+    const THRESHOLD =
       typeof window !== "undefined" ? window.innerHeight * 0.8 : 500;
 
     function handleScroll() {
       if (triggeredRef.current) return;
-      if (isFormSubmitted()) {
+      // Re-check in case another tab submitted
+      if (checkUser()) {
         setIsSubmitted(true);
-        setReturningName(getReturningUserName());
         triggeredRef.current = true;
         window.removeEventListener("scroll", handleScroll);
         return;
       }
-      if (window.scrollY > SCROLL_THRESHOLD) {
+      if (window.scrollY > THRESHOLD) {
         triggeredRef.current = true;
         setIsLocked(true);
         window.removeEventListener("scroll", handleScroll);
@@ -46,11 +46,10 @@ export function useFormLock() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Triggered by clicking "Explore Offers" CTA
+  // Triggered by "Explore Offers" CTA click
   const triggerByClick = useCallback(() => {
-    if (isFormSubmitted()) {
+    if (checkUser()) {
       setIsSubmitted(true);
-      setReturningName(getReturningUserName());
       return;
     }
     if (!triggeredRef.current) {
@@ -59,9 +58,9 @@ export function useFormLock() {
     }
   }, []);
 
-  // Called after successful form submission — saves to localStorage
-  const onFormSuccess = useCallback((name: string, contact: string) => {
-    markFormSubmitted(name, contact);
+  // Called by FormLockModal after successful submission
+  // user_id is already stored in localStorage inside submitForm()
+  const onFormSuccess = useCallback((name: string) => {
     setIsSubmitted(true);
     setIsLocked(false);
     setReturningName(name);
@@ -70,7 +69,7 @@ export function useFormLock() {
   return {
     isLocked:      isLocked && !isSubmitted,
     isSubmitted,
-    returningName,  // non-null for returning users
+    returningName,
     triggerByClick,
     onFormSuccess,
   };
