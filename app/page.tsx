@@ -43,7 +43,7 @@ export default function HomePage() {
   useEffect(() => {
     if (isSubmitted && returningName && !showOpening) {
       setShowWelcome(true);
-      const t = setTimeout(() => setShowWelcome(false), 5000); // 5s exactly
+      const t = setTimeout(() => setShowWelcome(false), 3000); // 3s exactly
       return () => clearTimeout(t);
     }
   }, [isSubmitted, returningName, showOpening]);
@@ -94,7 +94,7 @@ export default function HomePage() {
 
       <div className={`transition-opacity duration-700 ${showOpening ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
 
-        {/* Welcome back banner — 5 seconds then gone */}
+        {/* Welcome back banner — auto-hides after exactly 3 seconds */}
         <AnimatePresence>
           {showWelcome && returningName && (
             <motion.div
@@ -102,13 +102,23 @@ export default function HomePage() {
               animate={{ opacity:1, y:0 }}
               exit={{ opacity:0, y:-48 }}
               transition={{ duration:0.4, ease:[0.4,0,0.2,1] }}
-              className="fixed top-20 left-1/2 -translate-x-1/2 z-[800] pointer-events-none"
+              style={{
+                position:"fixed",
+                top:"5rem",
+                left:"50%",
+                transform:"translateX(-50%)",
+                zIndex:800,
+                pointerEvents:"none",
+                maxWidth:"calc(100vw - 2rem)",
+                width:"max-content",
+              }}
             >
               <div style={{
                 display:"flex", alignItems:"center", gap:10,
                 padding:"10px 20px", borderRadius:99,
                 background:"rgba(255,255,255,0.96)",
                 backdropFilter:"blur(16px)",
+                WebkitBackdropFilter:"blur(16px)",
                 border:"1px solid rgba(191,160,106,0.3)",
                 boxShadow:"0 8px 28px rgba(191,160,106,0.2)",
                 whiteSpace:"nowrap",
