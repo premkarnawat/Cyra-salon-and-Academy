@@ -105,12 +105,13 @@ export default function HomePage() {
               style={{
                 position:"fixed",
                 top:"5rem",
-                left:"50%",
-                transform:"translateX(-50%)",
+                left:0,
+                right:0,
                 zIndex:800,
                 pointerEvents:"none",
-                maxWidth:"calc(100vw - 2rem)",
-                width:"max-content",
+                display:"flex",
+                justifyContent:"center",
+                padding:"0 1rem",
               }}
             >
               <div style={{
