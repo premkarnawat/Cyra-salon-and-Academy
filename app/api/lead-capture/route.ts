@@ -63,3 +63,40 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }
+
+// ── GET ?check=1&user_id=<id> ─────────────────────────────────────────────────
+// Called on every page load by verifyUser() to check if the stored user_id
+// still exists in the DB.  Returns 200 if found, 404 if deleted/missing.
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const check  = searchParams.get("check");
+    const userId = searchParams.get("user_id");
+
+    if (check !== "1" || !userId) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+
+    const sb = SB();
+    const { data, error } = await sb
+      .from("users")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("User check error:", error);
+      // On DB error, return 200 to be conservative (avoid showing form on every error)
+      return NextResponse.json({ exists: true }, { status: 200 });
+    }
+
+    if (!data) {
+      // User deleted by admin — client should clear localStorage
+      return NextResponse.json({ exists: false }, { status: 404 });
+    }
+
+    return NextResponse.json({ exists: true }, { status: 200 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
+}
