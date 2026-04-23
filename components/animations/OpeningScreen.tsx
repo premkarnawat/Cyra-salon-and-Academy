@@ -65,40 +65,25 @@ export function OpeningScreen({
             }}
           />
 
-          {/* Brand — ONLY logo OR text brand, never both */}
+          {/* LOGO ONLY */}
           <motion.div
-            className="relative z-10 flex flex-col items-center gap-6 px-8 text-center"
-            initial={{ opacity: 0, scale: 0.82 }}
+            className="relative z-10 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
-              duration: 1.1,
-              delay: 0.3,
+              duration: 1.2,
               ease: [0.175, 0.885, 0.32, 1.1],
             }}
           >
-            {logoUrl ? (
-              /* LOGO ONLY — large, no text alongside */
-              <div className="relative w-52 h-52 md:w-64 md:h-64 lg:w-72 lg:h-72">
-                <Image
-                  src={logoUrl}
-                  alt={brandWord}
-                  fill
-                  className="object-contain drop-shadow-[0_0_40px_rgba(212,180,131,0.35)]"
-                  priority
-                />
-              </div>
-            ) : (
-
-            {/* Animated underline */}
-            <motion.div
-              style={{
-                height: "1px",
-                background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
-              }}
-              initial={{ width: 0 }}
-              animate={{ width: 120 }}
-              transition={{ duration: 1.8, delay: 1.0, ease: "easeInOut" }}
-            />
+            <div className="relative w-60 h-60 md:w-72 md:h-72 lg:w-80 lg:h-80">
+              <Image
+                src={logoUrl || "/logo.png"}
+                alt={brandWord}
+                fill
+                className="object-contain drop-shadow-[0_0_50px_rgba(212,180,131,0.4)]"
+                priority
+              />
+            </div>
           </motion.div>
         </motion.div>
       )}
