@@ -35,17 +35,17 @@ export function OpeningScreen({
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-white"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.6 }}
         >
-          {/* Background */}
+          {/* Background (lighter for performance) */}
           <motion.div
             className="absolute inset-0"
-            initial={{ scale: 1.12, filter: "blur(14px) brightness(0.28)" }}
-            animate={{ scale: 1.04, filter: "blur(7px) brightness(0.26)" }}
-            transition={{ duration: 2.8, ease: "easeOut" }}
+            initial={{ scale: 1.08, filter: "blur(6px) brightness(0.4)" }}
+            animate={{ scale: 1.02, filter: "blur(4px) brightness(0.45)" }}
+            transition={{ duration: 2.5, ease: "easeOut" }}
           >
             <Image
               src={bgUrl}
@@ -61,27 +61,28 @@ export function OpeningScreen({
             className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 100%)",
+                "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%)",
             }}
           />
 
-          {/* LOGO ONLY */}
+          {/* LOGO — INSTANT LOAD FIX */}
           <motion.div
             className="relative z-10 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
-              duration: 1.2,
+              duration: 1,
               ease: [0.175, 0.885, 0.32, 1.1],
             }}
           >
-            <div className="relative w-60 h-60 md:w-72 md:h-72 lg:w-80 lg:h-80">
+            <div className="relative w-60 h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 bg-white flex items-center justify-center">
               <Image
                 src={logoUrl || "/logo.png"}
                 alt={brandWord}
                 fill
-                className="object-contain drop-shadow-[0_0_50px_rgba(212,180,131,0.4)]"
                 priority
+                unoptimized
+                className="object-contain"
               />
             </div>
           </motion.div>
