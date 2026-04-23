@@ -65,58 +65,57 @@ export function OpeningScreen({
             }}
           />
 
-          {/* Brand */}
+          {/* Brand — ONLY logo OR text brand, never both */}
           <motion.div
-            className="relative z-10 flex flex-col items-center gap-4 px-8 text-center"
+            className="relative z-10 flex flex-col items-center gap-6 px-8 text-center"
             initial={{ opacity: 0, scale: 0.82 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
-              duration: 0.85,
-              delay: 0.25,
-              ease: [0.175, 0.885, 0.32, 1.275],
+              duration: 1.1,
+              delay: 0.3,
+              ease: [0.175, 0.885, 0.32, 1.1],
             }}
           >
             {logoUrl ? (
-              <div className="relative w-28 h-28 md:w-36 md:h-36">
+              /* LOGO ONLY — large, no text alongside */
+              <div className="relative w-52 h-52 md:w-64 md:h-64 lg:w-72 lg:h-72">
                 <Image
                   src={logoUrl}
                   alt={brandWord}
                   fill
-                  className="object-contain"
+                  className="object-contain drop-shadow-[0_0_40px_rgba(212,180,131,0.35)]"
+                  priority
                 />
               </div>
             ) : (
-              /* Text-only opening brand — same font rules */
+              /* Text-only fallback (no logo uploaded) */
               <div style={{ textAlign: "center" }}>
-                {/* CYRA — Cinzel Decorative only */}
                 <div
                   style={{
                     fontFamily: "'Cinzel Decorative', serif",
-                    fontSize: "clamp(2.8rem, 10vw, 5rem)",
+                    fontSize: "clamp(3.2rem, 12vw, 6rem)",
                     letterSpacing: "0.22em",
                     color: "#D4B483",
                     lineHeight: 1,
-                    textShadow: "0 0 50px rgba(212,180,131,0.45)",
+                    textShadow: "0 0 60px rgba(212,180,131,0.5)",
                     whiteSpace: "nowrap",
                   }}
                 >
                   {brandWord}
                 </div>
 
-                {/* Thin gold divider */}
                 <div style={{
-                  margin: "1rem auto",
-                  width: "4rem",
+                  margin: "1.2rem auto",
+                  width: "5rem",
                   height: "1px",
                   background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
                 }} />
 
-                {/* SALON & ACADEMY — Marcellus (NOT cinzel) */}
                 <div
                   style={{
                     fontFamily: "'Marcellus', serif",
-                    fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)",
-                    letterSpacing: "0.22em",
+                    fontSize: "clamp(0.6rem, 1.6vw, 0.8rem)",
+                    letterSpacing: "0.26em",
                     textTransform: "uppercase",
                     color: "rgba(212,180,131,0.72)",
                     whiteSpace: "nowrap",
@@ -134,8 +133,8 @@ export function OpeningScreen({
                 background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
               }}
               initial={{ width: 0 }}
-              animate={{ width: 100 }}
-              transition={{ duration: 1.6, delay: 0.9, ease: "easeInOut" }}
+              animate={{ width: 120 }}
+              transition={{ duration: 1.8, delay: 1.0, ease: "easeInOut" }}
             />
           </motion.div>
         </motion.div>
