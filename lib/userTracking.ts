@@ -1,35 +1,75 @@
 /**
  * lib/userTracking.ts
- * Modular user tracking: localStorage user_id + Supabase users/visits tables.
- * Import and use these three functions; do not use sessionStorage anywhere.
+ * User tracking with stale-session protection.
+ *
+ * On every page load, useFormLock calls verifyUser() which:
+ *   1. Reads user_id from localStorage
+ *   2. Pings /api/lead-capture?check=1 to verify the user still exists in DB
+ *   3a. EXISTS   → returning user, log visit, hide form
+ *   3b. NOT FOUND → remove stale localStorage keys, treat as new user, show form
  */
 
 const LS_USER_ID   = "cyra_user_id";
 const LS_USER_NAME = "cyra_user_name";
 
-// ── checkUser ─────────────────────────────────────────────────────────────────
-// Returns the stored user_id if the user has filled the form before, else null.
-// Call this on every page load.
+// ── Low-level readers ─────────────────────────────────────────────────────────
+
 export function checkUser(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(LS_USER_ID);
 }
 
-// Returns the stored user name for the welcome-back message
 export function getStoredUserName(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(LS_USER_NAME);
 }
 
+function clearStoredUser(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(LS_USER_ID);
+  localStorage.removeItem(LS_USER_NAME);
+}
+
+// ── verifyUser ────────────────────────────────────────────────────────────────
+// Returns:
+//   { exists: true,  userId, name }  — valid returning user
+//   { exists: false }                — no local id OR user deleted from DB
+export async function verifyUser(): Promise<
+  | { exists: true; userId: string; name: string | null }
+  | { exists: false }
+> {
+  const userId = checkUser();
+  if (!userId) return { exists: false };
+
+  try {
+    const res = await fetch(`/api/lead-capture?check=1&user_id=${encodeURIComponent(userId)}`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (res.status === 404) {
+      // User was deleted by admin — purge stale session
+      clearStoredUser();
+      return { exists: false };
+    }
+    if (!res.ok) {
+      // Network/server hiccup — be conservative: treat as returning (don't show form)
+      return { exists: true, userId, name: getStoredUserName() };
+    }
+    // 200 OK — user still in DB
+    return { exists: true, userId, name: getStoredUserName() };
+  } catch {
+    // Offline / fetch error — treat as returning to avoid spamming form
+    return { exists: true, userId, name: getStoredUserName() };
+  }
+}
+
 // ── submitForm ────────────────────────────────────────────────────────────────
-// Called when user submits the form for the very first time.
-// Creates user_id → stores in localStorage → POSTs to /api/lead-capture
 export async function submitForm(params: {
   name: string;
   contact: string;
   dob: string;
 }): Promise<{ success: boolean; error?: string; userId: string }> {
-  const userId = crypto.randomUUID();
+  const userId    = crypto.randomUUID();
   const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
 
   const res = await fetch("/api/lead-capture", {
@@ -58,12 +98,9 @@ export async function submitForm(params: {
 }
 
 // ── logVisit ──────────────────────────────────────────────────────────────────
-// Called on every page load for returning users.
-// Silently POSTs a visit row; never throws / never blocks UI.
 export async function logVisit(userId: string): Promise<void> {
   if (!userId) return;
   const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
-
   try {
     await fetch("/api/log-visit", {
       method: "POST",
@@ -71,6 +108,6 @@ export async function logVisit(userId: string): Promise<void> {
       body: JSON.stringify({ user_id: userId, user_agent: userAgent }),
     });
   } catch {
-    // Silently ignore — never block the user experience
+    // Silently ignore — never block UI
   }
 }
