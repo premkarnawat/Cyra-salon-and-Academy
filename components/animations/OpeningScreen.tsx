@@ -19,6 +19,7 @@ export function OpeningScreen({
   onComplete,
 }: OpeningScreenProps) {
   const [visible, setVisible] = useState(true);
+  const [loaded, setLoaded] = useState(false); // 🔥 KEY FIX
 
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(false), 2500);
@@ -38,7 +39,7 @@ export function OpeningScreen({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Background (light optimized blur) */}
+          {/* Background */}
           <motion.div
             className="absolute inset-0"
             initial={{ scale: 1.06, filter: "blur(6px) brightness(0.4)" }}
@@ -47,7 +48,7 @@ export function OpeningScreen({
           >
             <Image
               src={bgUrl}
-              alt="Background"
+              alt=""
               fill
               priority
               className="object-cover"
@@ -57,24 +58,22 @@ export function OpeningScreen({
           {/* Overlay */}
           <div className="absolute inset-0 bg-black/40" />
 
-          {/* LOGO ONLY (NO BACKGROUND) */}
+          {/* LOGO */}
           <motion.div
             className="relative z-10 flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              duration: 1,
-              ease: [0.175, 0.885, 0.32, 1.1],
-            }}
+            animate={{ opacity: loaded ? 1 : 0 }} // 🔥 show only after load
+            transition={{ duration: 0.8 }}
           >
             <div className="relative w-56 h-56 md:w-72 md:h-72 lg:w-80 lg:h-80">
               <Image
                 src={logoUrl || "/logo.png"}
-                alt="Cyra Logo"
+                alt="" // 🔥 REMOVE TEXT
                 fill
                 priority
                 unoptimized
                 className="object-contain"
+                onLoad={() => setLoaded(true)} // 🔥 KEY FIX
               />
             </div>
           </motion.div>
