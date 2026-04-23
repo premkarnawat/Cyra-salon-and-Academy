@@ -38,9 +38,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        cinzel: ["var(--font-cinzel)", "serif"],
-        cormorant: ["var(--font-cormorant)", "serif"],
-        jost: ["var(--font-jost)", "sans-serif"],
+        cinzel: ["'Cinzel Decorative'", "serif"],
+        marcellus: ["'Marcellus'", "serif"],
+        cormorant: ["'Cormorant Garamond'", "serif"],
+        jost: ["'Jost'", "sans-serif"],
       },
       backgroundImage: {
         "gold-gradient": "linear-gradient(135deg, #8C6E30 0%, #BFA06A 50%, #D4B483 100%)",
