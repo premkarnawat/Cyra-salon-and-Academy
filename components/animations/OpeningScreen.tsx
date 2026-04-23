@@ -21,51 +21,43 @@ export function OpeningScreen({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setVisible(false), 2800);
-    const t2 = setTimeout(() => onComplete(), 3400);
+    const t1 = setTimeout(() => setVisible(false), 2500);
+    const t2 = setTimeout(() => onComplete(), 3000);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, [onComplete]);
 
-  const brandWord = salonName.split(" ")[0].toUpperCase();
-
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-white"
+          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Background (lighter for performance) */}
+          {/* Background (light optimized blur) */}
           <motion.div
             className="absolute inset-0"
-            initial={{ scale: 1.08, filter: "blur(6px) brightness(0.4)" }}
+            initial={{ scale: 1.06, filter: "blur(6px) brightness(0.4)" }}
             animate={{ scale: 1.02, filter: "blur(4px) brightness(0.45)" }}
-            transition={{ duration: 2.5, ease: "easeOut" }}
+            transition={{ duration: 2.2, ease: "easeOut" }}
           >
             <Image
               src={bgUrl}
-              alt="Cyra Salon"
+              alt="Background"
               fill
-              className="object-cover"
               priority
+              className="object-cover"
             />
           </motion.div>
 
-          {/* Vignette */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%)",
-            }}
-          />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/40" />
 
-          {/* LOGO — INSTANT LOAD FIX */}
+          {/* LOGO ONLY (NO BACKGROUND) */}
           <motion.div
             className="relative z-10 flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.85 }}
@@ -75,10 +67,10 @@ export function OpeningScreen({
               ease: [0.175, 0.885, 0.32, 1.1],
             }}
           >
-            <div className="relative w-60 h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 bg-white flex items-center justify-center">
+            <div className="relative w-56 h-56 md:w-72 md:h-72 lg:w-80 lg:h-80">
               <Image
                 src={logoUrl || "/logo.png"}
-                alt={brandWord}
+                alt="Cyra Logo"
                 fill
                 priority
                 unoptimized
