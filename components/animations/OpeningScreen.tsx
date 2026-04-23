@@ -88,43 +88,6 @@ export function OpeningScreen({
                 />
               </div>
             ) : (
-              /* Text-only fallback (no logo uploaded) */
-              <div style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    fontFamily: "'Cinzel Decorative', serif",
-                    fontSize: "clamp(3.2rem, 12vw, 6rem)",
-                    letterSpacing: "0.22em",
-                    color: "#D4B483",
-                    lineHeight: 1,
-                    textShadow: "0 0 60px rgba(212,180,131,0.5)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {brandWord}
-                </div>
-
-                <div style={{
-                  margin: "1.2rem auto",
-                  width: "5rem",
-                  height: "1px",
-                  background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
-                }} />
-
-                <div
-                  style={{
-                    fontFamily: "'Marcellus', serif",
-                    fontSize: "clamp(0.6rem, 1.6vw, 0.8rem)",
-                    letterSpacing: "0.26em",
-                    textTransform: "uppercase",
-                    color: "rgba(212,180,131,0.72)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Salon &amp; Academy
-                </div>
-              </div>
-            )}
 
             {/* Animated underline */}
             <motion.div
