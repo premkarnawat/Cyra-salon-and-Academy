@@ -3,24 +3,20 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Moon, Sun, MessageCircle, Home, Phone, Clock, MapPin } from "lucide-react";
-import Image from "next/image";
 import { useTheme } from "@/hooks/useTheme";
 import { NAV_LINKS } from "@/lib/constants";
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from "@/lib/utils";
 import type { SiteConfig } from "@/types";
-
-const NAV_ICONS: Record<string, string> = {
-  Home:"🏠", Offers:"🔥", Packages:"💎", Services:"✂️",
-  Gallery:"📸", Reviews:"⭐", Contact:"📍",
-};
 
 interface NavbarProps {
   config: SiteConfig;
   onExploreOffers?: () => void;
 }
 
-// ── Brand block — logo LEFT of text, text ALWAYS visible ─────────────────────
-// "Salon & Academy" is constrained to never exceed CYRA text width.
+// ── Brand block ────────────────────────────────────────────────────────────────
+// CYRA: "Cinzel Decorative" — large, tracking-[0.22em], single line
+// SALON & ACADEMY: "Marcellus" — scaled so rendered width stays ≤ CYRA width
+// Both wrapped in inline-block container with text-align:center
 function BrandBlock({
   brandWord,
   logoUrl,
@@ -32,40 +28,65 @@ function BrandBlock({
   showLogo: boolean;
   size?: "navbar" | "sidebar";
 }) {
-  const cyraSize   = size === "navbar"  ? "text-[1.3rem] sm:text-[1.45rem]" : "text-[1.75rem]";
-  const subSize    = size === "navbar"  ? "text-[0.38rem] sm:text-[0.42rem]" : "text-[0.52rem]";
-  const logoHeight = size === "navbar"  ? "h-8 sm:h-9" : "h-11";
+  const isNavbar = size === "navbar";
 
   return (
-    <div className="flex items-center gap-2.5 leading-none select-none">
-      {/* Logo — shown LEFT of text when logo_placement is navbar or both */}
+    <div style={{ display: "flex", alignItems: "center", gap: isNavbar ? "10px" : "14px", lineHeight: 1, userSelect: "none" }}>
+      {/* Logo — clearly visible, proportional */}
       {showLogo && logoUrl && (
         <img
           src={logoUrl}
           alt="Cyra logo"
-          className={`${logoHeight} w-auto object-contain flex-shrink-0`}
+          style={{
+            height: isNavbar ? "2.6rem" : "3.4rem",
+            width: "auto",
+            objectFit: "contain",
+            flexShrink: 0,
+            display: "block",
+          }}
           draggable={false}
         />
       )}
 
-      {/* Text block — ALWAYS shown regardless of logo */}
-      <div className="flex flex-col items-start">
-        {/* CYRA */}
-        <span className={`font-cinzel ${cyraSize} tracking-[0.22em] text-[var(--gold-dark)] hover:text-[var(--gold)] transition-colors leading-none`}>
+      {/* Text container — shrinks to content, centred */}
+      <div style={{ display: "inline-block", textAlign: "center" }}>
+        {/* CYRA — Cinzel Decorative, exact brand typography */}
+        <div
+          style={{
+            fontFamily: "'Cinzel Decorative', serif",
+            fontSize: isNavbar ? "1.45rem" : "1.95rem",
+            letterSpacing: "0.22em",
+            color: "var(--gold-dark)",
+            whiteSpace: "nowrap",
+            lineHeight: 1,
+          }}
+        >
           {brandWord}
-        </span>
+        </div>
         {/*
-          "Salon & Academy" must fit inside CYRA width.
-          Achieved by: very tight letter-spacing + small font-size so the
-          rendered width of the subheading ≤ rendered width of CYRA.
-          Using inline style for pixel-precision control.
+          SALON & ACADEMY — Marcellus
+          Font-size + letter-spacing tuned so rendered width ≤ CYRA rendered width:
+          "CYRA" ≈ 4 glyphs × cyraSize × (1 + 0.22)
+          "SALON & ACADEMY" ≈ 15 glyphs × subSize × (1 + 0.13)
+          Solving: subSize ≈ cyraSize × (4 × 1.22) / (15 × 1.13) ≈ cyraSize × 0.288
+          navbar: 1.45 × 0.288 ≈ 0.42rem → use 0.42rem
+          sidebar: 1.95 × 0.288 ≈ 0.56rem → use 0.56rem
         */}
-        <span
-          className={`font-marcellus ${subSize} uppercase text-[var(--gold)] opacity-65 mt-[3px] tracking-[0.38em] block`}
-          style={{ maxWidth: "100%", letterSpacing: "0.38em" }}
+        <div
+          style={{
+            fontFamily: "'Marcellus', serif",
+            fontSize: isNavbar ? "0.42rem" : "0.56rem",
+            letterSpacing: "0.13em",
+            textTransform: "uppercase",
+            color: "var(--gold)",
+            opacity: 0.72,
+            marginTop: "4px",
+            whiteSpace: "nowrap",
+            textAlign: "center",
+          }}
         >
           Salon &amp; Academy
-        </span>
+        </div>
       </div>
     </div>
   );
@@ -90,7 +111,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
   function handleNavClick(href: string) {
     setSidebarOpen(false);
     if (href.startsWith("#")) {
-      setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior:"smooth", block:"start" }), 310);
+      setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" }), 310);
     }
   }
 
@@ -125,7 +146,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
               </button>
             </div>
 
-            {/* CENTER: Logo (left) + Brand text (always visible) */}
+            {/* CENTER: Brand */}
             <button onClick={() => handleNavClick("#home")} aria-label="Go home" className="flex-shrink-0">
               <BrandBlock
                 brandWord={brandWord}
@@ -159,14 +180,14 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
         {sidebarOpen && (
           <>
             <motion.div key="backdrop" className="fixed inset-0 z-[990] bg-black/35"
-              style={{ backdropFilter:"blur(4px)", WebkitBackdropFilter:"blur(4px)" }}
-              initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-              transition={{ duration:0.28 }} onClick={() => setSidebarOpen(false)} />
+              style={{ backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.28 }} onClick={() => setSidebarOpen(false)} />
 
             <motion.aside key="panel"
               className="fixed top-0 left-0 bottom-0 z-[1000] w-[min(310px,88vw)] bg-white flex flex-col shadow-[12px_0_60px_rgba(0,0,0,0.12)] border-r border-[rgba(191,160,106,0.15)]"
-              initial={{ x:"-100%" }} animate={{ x:0 }} exit={{ x:"-100%" }}
-              transition={{ type:"spring", damping:26, stiffness:260 }}>
+              initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 260 }}>
 
               {/* Sidebar header */}
               <div className="relative px-7 pt-10 pb-7 border-b border-[rgba(191,160,106,0.1)]">
@@ -189,8 +210,8 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                 {NAV_LINKS.map((link, i) => (
                   <motion.button key={link.href} onClick={() => handleNavClick(link.href)}
                     className="w-full text-left flex items-center gap-4 px-7 py-[13px] font-jost text-[14px] font-medium text-[#374151] hover:text-[var(--gold-dark)] hover:bg-[rgba(191,160,106,0.06)] border-l-[2.5px] border-transparent hover:border-[var(--gold)] transition-all"
-                    initial={{ opacity:0, x:-16 }} animate={{ opacity:1, x:0 }}
-                    transition={{ delay:i*0.045, duration:0.32 }}>
+                    initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.045, duration: 0.32 }}>
                     <span>{link.label}</span>
                     {link.label === "Offers" && (
                       <span className="ml-auto text-[8.5px] bg-[var(--gold)] text-white px-2 py-[2px] rounded-full font-bold">LIVE</span>
