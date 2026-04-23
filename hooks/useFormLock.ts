@@ -1,48 +1,61 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { checkUser, logVisit, getStoredUserName } from "@/lib/userTracking";
+import { verifyUser, logVisit, checkUser } from "@/lib/userTracking";
 
 export function useFormLock() {
   const [isLocked,      setIsLocked]      = useState(false);
   const [isSubmitted,   setIsSubmitted]   = useState(false);
   const [returningName, setReturningName] = useState<string | null>(null);
+  const [checking,      setChecking]      = useState(true); // true while async verify runs
   const triggeredRef = useRef(false);
 
   useEffect(() => {
-    const userId = checkUser(); // reads localStorage
+    let cancelled = false;
 
-    if (userId) {
-      // ── RETURNING USER ──────────────────────────────────────────────────────
-      // Skip form entirely, log this visit silently
-      setIsSubmitted(true);
-      setReturningName(getStoredUserName());
-      logVisit(userId); // fire-and-forget, never blocks UI
-      return;
-    }
+    async function init() {
+      // ── Step 1: verify user against DB (handles stale sessions) ───────────
+      const result = await verifyUser();
 
-    // ── NEW USER — set up scroll trigger ────────────────────────────────────
-    const THRESHOLD =
-      typeof window !== "undefined" ? window.innerHeight * 0.8 : 500;
+      if (cancelled) return;
 
-    function handleScroll() {
-      if (triggeredRef.current) return;
-      // Re-check in case another tab submitted
-      if (checkUser()) {
+      if (result.exists) {
+        // ── RETURNING USER ─────────────────────────────────────────────────
         setIsSubmitted(true);
-        triggeredRef.current = true;
-        window.removeEventListener("scroll", handleScroll);
+        setReturningName(result.name);
+        logVisit(result.userId); // fire-and-forget
+        setChecking(false);
         return;
       }
-      if (window.scrollY > THRESHOLD) {
-        triggeredRef.current = true;
-        setIsLocked(true);
-        window.removeEventListener("scroll", handleScroll);
+
+      // ── NEW USER (or deleted user — localStorage already cleared) ─────────
+      setChecking(false);
+
+      const THRESHOLD =
+        typeof window !== "undefined" ? window.innerHeight * 0.8 : 500;
+
+      function handleScroll() {
+        if (triggeredRef.current) return;
+        // Double-check: another tab may have submitted while scrolling
+        if (checkUser()) {
+          setIsSubmitted(true);
+          triggeredRef.current = true;
+          window.removeEventListener("scroll", handleScroll);
+          return;
+        }
+        if (window.scrollY > THRESHOLD) {
+          triggeredRef.current = true;
+          setIsLocked(true);
+          window.removeEventListener("scroll", handleScroll);
+        }
       }
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => window.removeEventListener("scroll", handleScroll);
     }
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    init();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,7 +72,6 @@ export function useFormLock() {
   }, []);
 
   // Called by FormLockModal after successful submission
-  // user_id is already stored in localStorage inside submitForm()
   const onFormSuccess = useCallback((name: string) => {
     setIsSubmitted(true);
     setIsLocked(false);
@@ -72,5 +84,6 @@ export function useFormLock() {
     returningName,
     triggerByClick,
     onFormSuccess,
+    checking,       // exposes loading state (optional — page.tsx ignores it)
   };
 }
