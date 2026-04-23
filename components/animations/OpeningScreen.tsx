@@ -72,7 +72,7 @@ export function OpeningScreen({
             animate={{ opacity: 1, scale: 1 }}
             transition={{
               duration: 0.85,
-              delay: 0.25, // slight delay prevents font flash
+              delay: 0.25,
               ease: [0.175, 0.885, 0.32, 1.275],
             }}
           >
@@ -86,38 +86,56 @@ export function OpeningScreen({
                 />
               </div>
             ) : (
-              <>
-                {/* CYRA — ONLY Cinzel Decorative */}
-                <span
-                  className="font-cinzel text-5xl md:text-7xl text-[#D4B483] tracking-[0.22em] leading-none"
+              /* Text-only opening brand — same font rules */
+              <div style={{ textAlign: "center" }}>
+                {/* CYRA — Cinzel Decorative only */}
+                <div
                   style={{
-                    textShadow: "0 0 50px rgba(212,180,131,0.45)",
                     fontFamily: "'Cinzel Decorative', serif",
+                    fontSize: "clamp(2.8rem, 10vw, 5rem)",
+                    letterSpacing: "0.22em",
+                    color: "#D4B483",
+                    lineHeight: 1,
+                    textShadow: "0 0 50px rgba(212,180,131,0.45)",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {brandWord}
-                </span>
+                </div>
 
-                <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#BFA06A] to-transparent" />
+                {/* Thin gold divider */}
+                <div style={{
+                  margin: "1rem auto",
+                  width: "4rem",
+                  height: "1px",
+                  background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
+                }} />
 
-                {/* FIXED: Removed marcellus → only cinzel */}
-                <span className="font-cinzel text-sm md:text-base tracking-[0.38em] text-[rgba(212,180,131,0.65)] uppercase">
+                {/* SALON & ACADEMY — Marcellus (NOT cinzel) */}
+                <div
+                  style={{
+                    fontFamily: "'Marcellus', serif",
+                    fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)",
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "rgba(212,180,131,0.72)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   Salon &amp; Academy
-                </span>
-              </>
+                </div>
+              </div>
             )}
 
             {/* Animated underline */}
             <motion.div
-              className="h-px bg-gradient-to-r from-transparent via-[#BFA06A] to-transparent"
-              initial={{ width: 0 }}
-              animate={{ width: [0, 100, 0] }}
-              transition={{
-                duration: 2,
-                delay: 0.9,
-                ease: "easeInOut",
+              style={{
+                height: "1px",
+                background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
               }}
-              style={{ width: "100px" }}
+              initial={{ width: 0 }}
+              animate={{ width: 100 }}
+              transition={{ duration: 1.6, delay: 0.9, ease: "easeInOut" }}
             />
           </motion.div>
         </motion.div>
