@@ -158,31 +158,33 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
             <div className="rounded-[28px] overflow-hidden shadow-xl bg-white border border-[rgba(191,160,106,0.2)]">
               <div style={{ padding: "2rem 1.75rem 2.25rem", textAlign: "center" }}>
 
-                {/* Logo — prominent but elegant */}
+                {/* Logo — large & centered */}
                 {showFormLogo && logoUrl && (
                   <img
                     src={logoUrl}
                     alt="Cyra logo"
                     style={{
                       display: "block",
-                      margin: "0 auto 1.1rem",
-                      height: "5rem",
+                      margin: "0 auto 1.5rem",
+                      height: "7rem",
                       width: "auto",
+                      maxWidth: "180px",
                       objectFit: "contain",
                     }}
                   />
                 )}
 
-                {/* Brand typography — IDENTICAL to Navbar/Sidebar */}
-                <div style={{ display: "inline-block", textAlign: "center" }}>
+                {/* Brand typography */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
                   <div
                     style={{
                       fontFamily: "'Cinzel Decorative', serif",
-                      fontSize: "1.85rem",
-                      letterSpacing: "0.22em",
+                      fontSize: "2.4rem",
+                      letterSpacing: "0.28em",
                       color: "var(--gold-dark)",
                       whiteSpace: "nowrap",
                       lineHeight: 1,
+                      marginBottom: "6px",
                     }}
                   >
                     CYRA
@@ -190,21 +192,22 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
                   <div
                     style={{
                       fontFamily: "'Marcellus', serif",
-                      fontSize: "0.54rem",
-                      letterSpacing: "0.13em",
+                      fontSize: "0.62rem",
+                      letterSpacing: "0.22em",
                       textTransform: "uppercase",
                       color: "var(--gold)",
-                      opacity: 0.72,
-                      marginTop: "5px",
+                      opacity: 0.8,
                       whiteSpace: "nowrap",
-                      textAlign: "center",
+                      maxWidth: "100%",
+                      overflow: "hidden",
+                      textOverflow: "clip",
                     }}
                   >
                     Salon &amp; Academy
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm font-jost text-[#6B7280]">Welcome! Please introduce yourself</p>
+                <p className="mt-5 text-sm font-jost text-[#6B7280]">Welcome! Please introduce yourself</p>
 
                 <form onSubmit={handleSubmit} style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <div ref={firstRef}>
