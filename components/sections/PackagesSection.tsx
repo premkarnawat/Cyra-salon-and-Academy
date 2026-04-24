@@ -23,7 +23,6 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <FadeIn>
           <SectionHeader
-            tag="💎 Value Bundles"
             title={<>Our <em className="text-[var(--gold-light)] not-italic font-normal">Packages</em></>}
             subtitle="Curated luxury treatments for every occasion"
           />
