@@ -67,25 +67,18 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
 
                     {/* ✅ FIXED PRICING */}
                     <div className="flex items-baseline gap-3 mb-3">
-                      {pkg.offer_price && pkg.offer_price > 0 ? (
-                        <>
-                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">
-                            {formatPrice(pkg.offer_price)}
-                          </span>
-
-                          {pkg.actual_price && pkg.actual_price > 0 && (
-                            <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
-                              {formatPrice(pkg.actual_price)}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        pkg.actual_price && pkg.actual_price > 0 && (
-                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">
+                      {/* MAIN PRICE */}
+                      <span className="font-jost text-[2rem] font-black text-[#1F2937]">
+                        {formatPrice(pkg.offer_price > 0 ? pkg.offer_price : pkg.actual_price)}
+                      </span>
+                      {/* CUT PRICE ONLY IF VALID */}
+                      {pkg.offer_price > 0 &&
+                        pkg.actual_price > 0 &&
+                        pkg.actual_price !== pkg.offer_price && (
+                          <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
                             {formatPrice(pkg.actual_price)}
                           </span>
-                        )
-                      )}
+                        )}
                     </div>
 
                     {/* Free Offer Description */}
