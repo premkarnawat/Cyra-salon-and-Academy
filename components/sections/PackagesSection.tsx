@@ -65,17 +65,26 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       <p className="text-[14px] text-[#4B5563] mb-3 font-light leading-relaxed">{pkg.description}</p>
                     )}
 
-                    {/* Pricing */}
+                    {/* ✅ FIXED PRICING */}
                     <div className="flex items-baseline gap-3 mb-3">
-                      {pkg.offer_price ? (
+                      {pkg.offer_price && pkg.offer_price > 0 ? (
                         <>
-                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">{formatPrice(pkg.offer_price)}</span>
-                          {pkg.actual_price > 0 && (
-                            <span className="font-jost text-[15px] line-through text-[#9CA3AF]">{formatPrice(pkg.actual_price)}</span>
+                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">
+                            {formatPrice(pkg.offer_price)}
+                          </span>
+
+                          {pkg.actual_price && pkg.actual_price > 0 && (
+                            <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
+                              {formatPrice(pkg.actual_price)}
+                            </span>
                           )}
                         </>
                       ) : (
-                        <span className="font-jost text-[2rem] font-black text-[#1F2937]">{formatPrice(pkg.actual_price)}</span>
+                        pkg.actual_price && pkg.actual_price > 0 && (
+                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">
+                            {formatPrice(pkg.actual_price)}
+                          </span>
+                        )
                       )}
                     </div>
 
@@ -86,12 +95,11 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       </p>
                     )}
 
-                    {/* Features — LARGER, DARKER, MORE READABLE */}
+                    {/* Features */}
                     <ul className="space-y-3 mb-6 flex-1 mt-2">
                       {pkg.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                           <Check size={15} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
-                          {/* Increased from text-sm/font-light to text-[15px]/font-normal for readability */}
                           <span className="font-jost text-[15px] text-[#374151] font-normal leading-snug">{f}</span>
                         </li>
                       ))}
