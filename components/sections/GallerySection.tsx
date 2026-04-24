@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence, useMotionValue, animate, MotionValue } from "framer-motion";
-import { Play } from "lucide-react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { FadeIn } from "@/components/animations/FadeIn";
+import { motion, AnimatePresence } from "framer-motion";
 import type { GalleryItem } from "@/types";
 
 const FALLBACK: GalleryItem[] = [
@@ -22,84 +19,44 @@ const FALLBACK: GalleryItem[] = [
 const AUTO_MS   = 10000;
 const SWIPE_MIN = 44;
 
-// ✅ (kept but no longer used for layout — safe to keep)
-function useNaturalAspect(src: string, type: string) {
-  const [aspect, setAspect] = useState<number | null>(null);
+// Pure crossfade variants — zero x-movement = zero layout shift / bounce
+const FADE_VARIANTS = {
+  enter:  { opacity: 0 },
+  center: { opacity: 1, transition: { duration: 0.55, ease: "easeInOut" } },
+  exit:   { opacity: 0, transition: { duration: 0.35, ease: "easeInOut" } },
+};
 
-  useEffect(() => {
-    if (type !== "image") return;
-    const img = new window.Image();
-    img.onload = () => {
-      if (img.naturalWidth && img.naturalHeight) {
-        setAspect(img.naturalHeight / img.naturalWidth);
-      }
-    };
-    img.src = src;
-  }, [src, type]);
-
-  return aspect;
-}
-
-// ✅ FIXED COMPONENT
 function SlideItem({
   item,
   priority,
-  dragX,
-  onDragEnd,
-  variants,
-  dir,
 }: {
   item: GalleryItem;
   priority: boolean;
-  dragX: MotionValue<number>;
-  onDragEnd: (_: unknown, info: { offset: { x: number } }) => void;
-  variants: Record<string, unknown>;
-  dir: number;
 }) {
   return (
+    // absolute so entering/exiting slides stack — no layout reflow
     <motion.div
-      custom={dir}
-      variants={variants as any}
+      key={item.id}
+      variants={FADE_VARIANTS}
       initial="enter"
       animate="center"
       exit="exit"
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.08}
-      onDragEnd={onDragEnd}
-      style={{ x: dragX, cursor: "grab", willChange: "transform" }}
-      whileDrag={{ cursor: "grabbing" }}
-      className="w-full"
+      className="absolute inset-0 w-full h-full"
+      style={{ willChange: "opacity" }}
     >
       {item.media_type === "video" ? (
-        <div className="relative w-full">
-          <video
-            src={item.media_url}
-            className="w-full h-auto"
-            muted
-            playsInline
-            controls
-            controlsList="nodownload"
-          />
-        </div>
+        <video
+          src={item.media_url}
+          className="w-full h-full object-contain"
+          muted
+          playsInline
+          controls
+          controlsList="nodownload"
+        />
       ) : (
-        // FIXED LANDSCAPE FRAME: no crop, object-contain, theme-aware bg
-        <div
-          className="w-full"
-          style={{
-            aspectRatio: "16/9",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {/* Theme-aware background — dark in dark mode, white in light */}
-          <div
-            className="absolute inset-0 bg-white dark:bg-[#0C0B09]"
-            style={{ zIndex: 0 }}
-          />
+        <>
+          {/* Theme-aware background */}
+          <div className="absolute inset-0 bg-white dark:bg-[#0C0B09]" />
           <Image
             src={item.media_url}
             alt={item.title || "Gallery"}
@@ -110,53 +67,36 @@ function SlideItem({
             loading={priority ? "eager" : "lazy"}
             quality={85}
             draggable={false}
-            style={{ zIndex: 1 }}
           />
-
-          {/* Title Overlay */}
           {item.title && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: "0 20px 16px",
-                pointerEvents: "none",
-                zIndex: 2,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "'Cormorant Garamond',serif",
-                  fontSize: "clamp(1rem,2.5vw,1.3rem)",
-                  color: "#fff",
-                  textShadow: "0 1px 6px rgba(0,0,0,0.6)",
-                  margin: 0,
-                }}
-              >
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pointer-events-none z-10">
+              <p style={{
+                fontFamily: "'Cormorant Garamond',serif",
+                fontSize: "clamp(1rem,2.5vw,1.3rem)",
+                color: "#fff",
+                textShadow: "0 1px 6px rgba(0,0,0,0.6)",
+                margin: 0,
+              }}>
                 {item.title}
               </p>
             </div>
           )}
-        </div>
+        </>
       )}
     </motion.div>
   );
 }
 
 export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
-  const list   = (gallery && gallery.length) ? gallery : FALLBACK;
-  const total  = list.length;
-  const [cur,  setCur]  = useState(0);
-  const [dir,  setDir]  = useState(1);
-  const dragX  = useMotionValue(0);
-  const timer  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const list  = (gallery && gallery.length) ? gallery : FALLBACK;
+  const total = list.length;
+  const [cur, setCur] = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const resetTimer = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
     timer.current = setInterval(() => {
-      setDir(1); setCur(c => (c + 1) % total);
+      setCur(c => (c + 1) % total);
     }, AUTO_MS);
   }, [total]);
 
@@ -165,37 +105,61 @@ export function GallerySection({ gallery }: { gallery: GalleryItem[] }) {
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [resetTimer]);
 
-  function goTo(next: number, d: number) {
-    setDir(d); setCur((next + total) % total); resetTimer();
+  function goTo(next: number) {
+    setCur((next + total) % total);
+    resetTimer();
   }
-
-  function onDragEnd(_: unknown, info: { offset: { x: number } }) {
-    if      (info.offset.x < -SWIPE_MIN) goTo(cur + 1,  1);
-    else if (info.offset.x >  SWIPE_MIN) goTo(cur - 1, -1);
-    animate(dragX, 0, { duration: 0.22 });
-  }
-
-  const variants = {
-    enter:  (d: number) => ({ x: d > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit:   (d: number) => ({ x: d > 0 ? "-100%" : "100%", opacity: 0 }),
-  };
 
   const item = list[cur];
 
   return (
     <section id="gallery">
-      <AnimatePresence mode="wait">
-        <SlideItem
-          key={item.id}
-          item={item}
-          priority={cur === 0}
-          dragX={dragX}
-          onDragEnd={onDragEnd}
-          variants={variants}
-          dir={dir}
-        />
-      </AnimatePresence>
+      {/* ── FIXED-HEIGHT CONTAINER — overflow:hidden + isolate prevents any layout bounce ── */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ aspectRatio: "16/9", isolation: "isolate", cursor: "grab" }}
+        onPointerDown={(e) => {
+          const startX = e.clientX;
+          const onUp = (ev: PointerEvent) => {
+            const dx = ev.clientX - startX;
+            if      (dx < -SWIPE_MIN) goTo(cur + 1);
+            else if (dx >  SWIPE_MIN) goTo(cur - 1);
+            window.removeEventListener("pointerup", onUp);
+          };
+          window.addEventListener("pointerup", onUp, { once: true });
+        }}
+      >
+        <AnimatePresence mode="sync">
+          <SlideItem
+            key={item.id}
+            item={item}
+            priority={cur === 0}
+          />
+        </AnimatePresence>
+
+        {/* Dot indicators */}
+        {total > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+            {list.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className="transition-all duration-300"
+                style={{
+                  width:  i === cur ? "20px" : "6px",
+                  height: "6px",
+                  borderRadius: "999px",
+                  background: i === cur ? "var(--gold)" : "rgba(255,255,255,0.45)",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
