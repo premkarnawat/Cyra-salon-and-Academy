@@ -37,9 +37,7 @@ export function ReviewsSection({ reviews }: { reviews: Review[] }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <FadeIn>
           <SectionHeader
-            tag="⭐ Client Love"
             title={<>What Our Clients <em className="text-[var(--gold-light)]">Say</em></>}
-            subtitle={`${avg.toFixed(1)} average rating · ${list.length}+ happy clients`}
           />
         </FadeIn>
 
