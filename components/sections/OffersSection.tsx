@@ -74,7 +74,6 @@ export function OffersSection({ offers }: any) {
 
         <FadeIn>
           <SectionHeader
-            tag="✦ Hot Deals"
             title={
               <>
                 Exclusive{" "}
