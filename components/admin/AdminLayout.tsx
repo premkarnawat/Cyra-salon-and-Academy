@@ -52,13 +52,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <p className="px-6 mb-2 text-[8.5px] tracking-[0.3em] uppercase text-[var(--gold)]/40 font-semibold">Menu</p>
         {NAV_ITEMS.map(item => {
           const active = pathname === item.href;
-          const Icon   = item.icon;
           return (
             <button
               key={item.href}
               onClick={() => { router.push(item.href); setOpen(false); }}
               className={`
-                w-full flex items-center gap-3 px-6 py-3 text-[13px] font-medium
+                w-full flex items-center px-6 py-3 text-[13px] font-medium
                 border-l-2 transition-all duration-200
                 ${active
                   ? "border-[var(--gold)] bg-[rgba(191,160,106,0.07)] text-[var(--gold-dark)]"
@@ -66,8 +65,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 }
               `}
             >
-              <Icon size={15} strokeWidth={active ? 2 : 1.8} className={active ? "text-[var(--gold)]" : "text-[#8C7A5E]"} />
-              <span className="font-jost tracking-wide">{item.label}</span>
+              <span style={{ fontFamily: "'Marcellus', serif" }} className="tracking-wide">{item.label}</span>
               {active && <ChevronRight size={12} className="ml-auto text-[var(--gold)]" />}
             </button>
           );
@@ -95,7 +93,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F4EE] flex font-jost">
+    <div className="min-h-screen bg-[#F7F4EE] flex" style={{ fontFamily: "'Marcellus', serif" }}>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block w-52 flex-shrink-0 fixed top-0 bottom-0 left-0 z-50 shadow-[2px_0_20px_rgba(0,0,0,0.05)]">
         <SidebarContent />
