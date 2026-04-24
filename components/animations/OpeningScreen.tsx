@@ -92,9 +92,9 @@ export function OpeningScreen({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.75, ease: [0.175, 0.885, 0.32, 1.2] }}
           >
-            {/* Logo (only when provided) */}
+            {/* Logo only */}
             {logoUrl && (
-              <div className="relative w-28 h-28 md:w-36 md:h-36">
+              <div className="relative w-44 h-44 md:w-56 md:h-56">
                 <Image
                   src={logoUrl}
                   alt={brandWord}
@@ -104,43 +104,6 @@ export function OpeningScreen({
                 />
               </div>
             )}
-
-            {/* Text brand */}
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  fontFamily: "'Cinzel Decorative', serif",
-                  fontSize: "clamp(2.6rem, 9vw, 4.8rem)",
-                  letterSpacing: "0.22em",
-                  color: "#D4B483",
-                  lineHeight: 1,
-                  textShadow: "0 0 50px rgba(212,180,131,0.4)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {brandWord}
-              </div>
-
-              <div style={{
-                margin: "0.85rem auto",
-                width: "4rem",
-                height: "1px",
-                background: "linear-gradient(90deg, transparent, #BFA06A, transparent)",
-              }} />
-
-              <div
-                style={{
-                  fontFamily: "'Marcellus', serif",
-                  fontSize: "clamp(0.52rem, 1.4vw, 0.72rem)",
-                  letterSpacing: "0.28em",
-                  textTransform: "uppercase",
-                  color: "rgba(212,180,131,0.72)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Salon &amp; Academy
-              </div>
-            </div>
 
             {/* Animated gold underline */}
             <motion.div
