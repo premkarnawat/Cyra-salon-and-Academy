@@ -4,21 +4,21 @@ import type { SiteConfig } from "@/types";
 
 export function Footer({ config }: { config: SiteConfig }) {
   return (
-    <footer id="footer" className="bg-[#0C0B09] border-t border-[rgba(191,160,106,0.1)] text-[rgba(240,232,216,0.6)]">
+    <footer id="footer" className="bg-[#0C0B09] border-t border-[rgba(191,160,106,0.1)] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-4 sm:pb-6">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 mb-10 sm:mb-12">
 
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             {config.logo_url ? (
-              <img src={config.logo_url} alt="Cyra" className="h-10 w-auto object-contain mb-3 opacity-90" />
+              <img src={config.logo_url} alt="Cyra" className="h-20 w-auto object-contain mb-3" style={{ opacity: 1 }} />
             ) : (
               <div className="font-cinzel text-2xl sm:text-3xl tracking-[0.2em] text-[var(--gold-light)] mb-2">
                 {config.salon_name?.split(" ")[0] || "Cyra"}
               </div>
             )}
             <div className="w-7 h-px bg-gradient-to-r from-[var(--gold)] to-transparent mb-4" />
-            <p className="text-[13px] leading-relaxed font-light text-[rgba(240,232,216,0.42)] max-w-[200px]">
+            <p className="text-[13px] leading-relaxed font-light text-white/80 max-w-[200px]">
               {config.tagline || "Pune's premier luxury salon & academy."}
             </p>
             <div className="flex gap-3 mt-5">
