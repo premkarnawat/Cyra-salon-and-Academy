@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Eye, EyeOff, Lock } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,12 +61,32 @@ export default function AdminLoginPage() {
           <div className="px-8 py-10">
             {/* Brand */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[rgba(191,160,106,0.1)] border border-[rgba(191,160,106,0.2)] mb-4">
-                <Lock size={18} strokeWidth={1.8} className="text-[var(--gold-dark)]" />
+              <div
+                style={{
+                  fontFamily: "'Cinzel Decorative', serif",
+                  fontSize: "2.2rem",
+                  letterSpacing: "0.28em",
+                  color: "var(--gold-dark)",
+                  lineHeight: 1,
+                  marginBottom: "6px",
+                }}
+              >
+                CYRA
               </div>
-              <div className="font-cinzel text-[1.7rem] tracking-[0.22em] text-[var(--gold-dark)] leading-none">CYRA</div>
-              <div className="font-marcellus text-[0.55rem] tracking-[0.42em] uppercase text-[var(--gold)] opacity-70 mt-1.5">Admin Portal</div>
-              <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mt-4" />
+              <div
+                style={{
+                  fontFamily: "'Marcellus', serif",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.38em",
+                  textTransform: "uppercase",
+                  color: "var(--gold)",
+                  opacity: 0.8,
+                  marginBottom: "12px",
+                }}
+              >
+                Admin Portal
+              </div>
+              <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto" />
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
