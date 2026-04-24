@@ -14,6 +14,8 @@ export const DEFAULT_CONFIG = {
   instagram_url:    "https://instagram.com/cyrasalon",
   facebook_url:     "https://facebook.com/cyrasalon",
   logo_placement:   "none" as "none" | "navbar" | "form" | "both",
+  about_text:       "",
+  about_image_url:  "",
 };
 
 export const NAV_LINKS = [
