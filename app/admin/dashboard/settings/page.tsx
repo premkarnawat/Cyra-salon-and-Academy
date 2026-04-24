@@ -33,13 +33,14 @@ const PLACEMENT_OPTIONS: { value: SiteConfig["logo_placement"]; label: string; d
   { value:"both",   label:"Navbar + Form",  desc:"Logo appears in both navbar and form" },
 ];
 
-type Tab="logo"|"general"|"opening"|"fonts"|"social";
+type Tab="logo"|"general"|"opening"|"fonts"|"social"|"about";
 const TABS:{ id:Tab;label:string }[]=[
   {id:"logo",    label:"🖼 Logo"},
   {id:"general", label:"General"},
   {id:"opening", label:"Opening"},
   {id:"fonts",   label:"Fonts"},
   {id:"social",  label:"Social"},
+  {id:"about",   label:"About Us"},
 ];
 
 export default function SettingsPage() {
@@ -223,6 +224,33 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ABOUT US ── */}
+          {tab==="about" && (
+            <div className="space-y-5">
+              <h3 className="font-semibold text-[#111827]">About Us Section</h3>
+              <p className="text-sm text-[#6B7280] -mt-2">This section appears between Packages and Rate Cards on the frontend.</p>
+              <div>
+                <label className={lbl}>About Text</label>
+                <textarea
+                  rows={6}
+                  value={(config as ExtConfig).about_text||""}
+                  onChange={e=>set("about_text" as keyof ExtConfig, e.target.value)}
+                  placeholder="Write about your salon, your journey, your vision..."
+                  className={`${inp} resize-none`}
+                />
+              </div>
+              <div>
+                <label className={lbl}>About Image (Passport / Portrait size)</label>
+                <p className="text-xs text-[#9CA3AF] mb-2">Upload a passport-size or portrait photo. Recommended ratio: 5:6</p>
+                <ImageUpload
+                  value={(config as ExtConfig).about_image_url||""}
+                  onChange={url=>set("about_image_url" as keyof ExtConfig, url)}
+                  bucket="settings" folder="about" label="Upload About Image"
+                />
               </div>
             </div>
           )}
