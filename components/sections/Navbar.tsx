@@ -32,7 +32,7 @@ function BrandBlock({
           src={logoUrl}
           alt="Cyra logo"
           style={{
-            height: isNavbar ? "3.2rem" : "4.2rem", // 🔥 Bigger logo
+            height: isNavbar ? "4.8rem" : "6rem",
             width: "auto",
             objectFit: "contain",
             display: "block",
@@ -81,7 +81,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between gap-3">
+          <div className="h-20 flex items-center justify-between gap-3">
 
             {/* LEFT */}
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -125,7 +125,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
         </div>
       </header>
 
-      <div className="h-16" />
+      <div className="h-20" />
 
       {/* SIDEBAR */}
       <AnimatePresence>
