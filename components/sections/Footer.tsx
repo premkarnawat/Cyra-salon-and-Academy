@@ -3,6 +3,9 @@ import { NAV_LINKS } from "@/lib/constants";
 import type { SiteConfig } from "@/types";
 
 export function Footer({ config }: { config: SiteConfig }) {
+  // Change 4: prefer footer-specific logo, fall back to global logo
+  const footerLogo = config.footer_logo_url || config.logo_url;
+
   return (
     <footer id="footer" className="bg-[#0C0B09] border-t border-[rgba(191,160,106,0.1)] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-4 sm:pb-6">
@@ -10,8 +13,8 @@ export function Footer({ config }: { config: SiteConfig }) {
 
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
-            {config.logo_url ? (
-              <img src={config.logo_url} alt="Cyra" className="h-20 w-auto object-contain mb-3" style={{ opacity: 1 }} />
+            {footerLogo ? (
+              <img src={footerLogo} alt="Cyra" className="h-20 w-auto object-contain mb-3" style={{ opacity: 1 }} />
             ) : (
               <div className="font-cinzel text-2xl sm:text-3xl tracking-[0.2em] text-[var(--gold-light)] mb-2">
                 {config.salon_name?.split(" ")[0] || "Cyra"}
@@ -43,7 +46,7 @@ export function Footer({ config }: { config: SiteConfig }) {
             <ul className="space-y-2.5">
               {NAV_LINKS.slice(0, 6).map(link => (
                 <li key={link.href}>
-                  <a href={link.href} className="text-[13px] hover:text-[var(--gold)] transition-colors font-light">{link.label}</a>
+                  <a href={link.href} className="text-[13px] text-white hover:text-[var(--gold)] transition-colors font-light">{link.label}</a>
                 </li>
               ))}
             </ul>
@@ -54,7 +57,7 @@ export function Footer({ config }: { config: SiteConfig }) {
             <h4 className="text-[10px] tracking-[0.28em] uppercase text-[var(--gold)] font-semibold mb-4 sm:mb-5">Services</h4>
             <ul className="space-y-2.5 text-[13px] font-light">
               {["Haircut & Styling","Hair Colour","Keratin","Bridal","Hair Spa","Academy"].map(s => (
-                <li key={s} className="hover:text-[var(--gold)] transition-colors cursor-default">{s}</li>
+                <li key={s} className="text-white hover:text-[var(--gold)] transition-colors cursor-default">{s}</li>
               ))}
             </ul>
           </div>
@@ -66,25 +69,39 @@ export function Footer({ config }: { config: SiteConfig }) {
               {config.phone && (
                 <li className="flex items-start gap-2.5 text-[13px] font-light">
                   <Phone size={13} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
-                  <a href={`tel:${config.phone}`} className="hover:text-[var(--gold)] transition-colors">{config.phone}</a>
+                  <a href={`tel:${config.phone}`} className="text-white hover:text-[var(--gold)] transition-colors">{config.phone}</a>
                 </li>
               )}
               {config.email && (
                 <li className="flex items-start gap-2.5 text-[13px] font-light">
                   <Mail size={13} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
-                  <a href={`mailto:${config.email}`} className="hover:text-[var(--gold)] transition-colors break-all">{config.email}</a>
+                  <a href={`mailto:${config.email}`} className="text-white hover:text-[var(--gold)] transition-colors break-all">{config.email}</a>
                 </li>
               )}
+
+              {/* Change 3: first address */}
               {config.address && (
                 <li className="flex items-start gap-2.5 text-[13px] font-light">
                   <MapPin size={13} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
-                  <span className="leading-relaxed">{config.address}</span>
+                  <span className="text-white leading-relaxed">{config.address}</span>
                 </li>
               )}
+
+              {/* Change 3: second address — shown only if set, with a subtle separator */}
+              {config.address2 && (
+                <li className="flex items-start gap-2.5 text-[13px] font-light">
+                  <MapPin size={13} className="text-[var(--gold)]/60 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-[9px] tracking-[0.2em] uppercase text-[var(--gold)]/50 block mb-0.5">Branch 2</span>
+                    <span className="text-white/80 leading-relaxed">{config.address2}</span>
+                  </div>
+                </li>
+              )}
+
               {config.opening_hours && (
                 <li className="flex items-start gap-2.5 text-[13px] font-light">
                   <Clock size={13} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
-                  <span>{config.opening_hours}</span>
+                  <span className="text-white">{config.opening_hours}</span>
                 </li>
               )}
             </ul>
@@ -94,13 +111,12 @@ export function Footer({ config }: { config: SiteConfig }) {
         {/* Bottom bar */}
         <div className="border-t border-[rgba(191,160,106,0.1)] pt-5 space-y-2">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-[12px] text-[rgba(240,232,216,0.28)]">
+            <p className="text-[12px] text-white/60">
               {config.footer_copyright || `© ${new Date().getFullYear()} Cyra Salon & Academy. All rights reserved.`}
             </p>
-            <p className="text-[12px] text-[rgba(191,160,106,0.4)]">Crafted with ♥ in Pune</p>
+            <p className="text-[12px] text-[rgba(191,160,106,0.5)]">Crafted with ♥ in Pune</p>
           </div>
-          {/* Developer credit */}
-          <p className="text-center text-[11px] text-[rgba(240,232,216,0.18)] tracking-wide">
+          <p className="text-center text-[11px] text-white/25 tracking-wide">
             Design and Developed by: Prem Karnawat
           </p>
         </div>
