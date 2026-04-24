@@ -13,9 +13,9 @@ import toast from "react-hot-toast";
 import type { Package } from "@/types";
 
 const EMPTY: Partial<Package> = {
-  name:"", description:"", actual_price:0, offer_price:0, discount_percent:0,
+  name:"", description:"", actual_price:0, offer_price:undefined, discount_percent:0,
   badge:"", image_url:"", features:[], is_active:true, sort_order:0,
-  offer_type:"normal", b1g1_free_package:"", b1g1_details:"",
+  offer_type:"normal", b1g1_free_package:"", b1g1_details:"", free_offer_description:"",
 };
 
 export default function PackagesPage() {
@@ -39,7 +39,7 @@ export default function PackagesPage() {
   function remFeat(i:number){ setForm(f=>({...f,features:f.features?.filter((_,idx)=>idx!==i)})); }
 
   async function save() {
-    if(!form.name||!form.offer_price) return toast.error("Name & offer price required");
+    if(!form.name) return toast.error("Package name is required");
     setSaving(true);
     const body=editing?{...form,id:editing}:form;
     const r=await adminFetch("/api/packages",{method:editing?"PUT":"POST",body:body as Record<string,unknown>,token});
@@ -95,7 +95,7 @@ export default function PackagesPage() {
               <input placeholder="Package Name *" value={form.name||""} onChange={e=>setForm({...form,name:e.target.value})} className={inp}/>
               <input placeholder="Badge (e.g. Most Popular)" value={form.badge||""} onChange={e=>setForm({...form,badge:e.target.value})} className={inp}/>
               <input type="number" placeholder="Actual Price ₹" value={form.actual_price||""} onChange={e=>setForm({...form,actual_price:+e.target.value})} className={inp}/>
-              <input type="number" placeholder="Offer Price ₹ *" value={form.offer_price||""} onChange={e=>setForm({...form,offer_price:+e.target.value})} className={inp}/>
+              <input type="number" placeholder="Offer Price ₹ (optional)" value={form.offer_price||""} onChange={e=>setForm({...form,offer_price:e.target.value?+e.target.value:undefined})} className={inp}/>
               <input type="number" placeholder="Discount %" value={form.discount_percent||""} onChange={e=>setForm({...form,discount_percent:+e.target.value})} className={inp}/>
               <input type="number" placeholder="Sort Order" value={form.sort_order||0} onChange={e=>setForm({...form,sort_order:+e.target.value})} className={inp}/>
               <textarea placeholder="Description" rows={2} value={form.description||""} onChange={e=>setForm({...form,description:e.target.value})} className={`${inp} md:col-span-2 resize-none`}/>
@@ -123,6 +123,18 @@ export default function PackagesPage() {
                 />
               </div>
             )}
+
+            {/* Free Offer Description */}
+            <div>
+              <p className="text-xs font-semibold text-[#374151] mb-1.5">Free Offer Description <span className="text-[#9CA3AF] font-normal">(optional — shown below price)</span></p>
+              <textarea
+                placeholder='e.g. On ₹2000 Hair Spa, get Hair Color FREE'
+                rows={2}
+                value={form.free_offer_description||""}
+                onChange={e=>setForm({...form,free_offer_description:e.target.value})}
+                className={`${inp} resize-none`}
+              />
+            </div>
 
             {/* Features */}
             <div>
@@ -185,6 +197,7 @@ export default function PackagesPage() {
                   </div>
                   <ul className="mt-2 space-y-1">{p.features?.slice(0,3).map((f,i)=><li key={i} className="text-xs text-[#6B7280]">• {f}</li>)}</ul>
                   {p.b1g1_free_package&&<p className="mt-1.5 text-[11px] text-[var(--gold-dark)] font-medium">🎁 Free: {p.b1g1_free_package}</p>}
+                  {p.free_offer_description&&<p className="mt-1 text-[11px] text-[var(--gold-dark)] font-medium">🎁 {p.free_offer_description}</p>}
                 </div>
               </div>
             ))}
