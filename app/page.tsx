@@ -10,6 +10,7 @@ import { PackagesSection } from "@/components/sections/PackagesSection";
 import { RateCardSection } from "@/components/sections/RateCardSection";
 import { GallerySection }  from "@/components/sections/GallerySection";
 import { ReviewsSection }  from "@/components/sections/ReviewsSection";
+import { AboutSection }    from "@/components/sections/AboutSection";
 import { WhatsAppButton }  from "@/components/sections/WhatsAppButton";
 import { Footer }          from "@/components/sections/Footer";
 import { FormLockModal }   from "@/components/sections/FormLockModal";
@@ -142,6 +143,7 @@ export default function HomePage() {
           <HeroBanner      banners={banners}      onExploreCTA={isSubmitted ? undefined : triggerByClick} />
           <OffersSection   offers={offers} />
           <PackagesSection packages={packages} />
+          <AboutSection    aboutText={config.about_text} aboutImageUrl={config.about_image_url} />
           <RateCardSection rateCards={rateCards} />
           <GallerySection  gallery={gallery} />
           <ReviewsSection  reviews={reviews} />
