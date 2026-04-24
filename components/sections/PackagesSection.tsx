@@ -32,12 +32,25 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
           {list.map(pkg => {
             const featured = pkg.id === featuredId;
 
-            const offer  = pkg.offer_price ?? 0;
-            const actual = pkg.actual_price ?? 0;
-            const discount = pkg.discount_percent ?? 0;
+            // Strict extraction: treat null/undefined/0 all as "not provided"
+            const offer  = (pkg.offer_price != null && pkg.offer_price > 0)  ? pkg.offer_price  : null;
+            const actual = (pkg.actual_price != null && pkg.actual_price > 0) ? pkg.actual_price : null;
+            const discount = (pkg.discount_percent != null && pkg.discount_percent > 0) ? pkg.discount_percent : null;
 
-            const hasPrice = offer > 0 || actual > 0;
-            const mainPrice = offer > 0 ? offer : actual;
+            // Price display logic:
+            // - Both exist & different → show offer (main) + actual (strike)
+            // - Only offer exists       → show offer only
+            // - Only actual exists      → show actual only
+            // - Neither exists          → show nothing
+            const hasPrice = offer !== null || actual !== null;
+            const mainPrice = offer !== null ? offer : actual;
+            const showStrike = offer !== null && actual !== null && actual !== offer;
+
+            // B1G1 logic: only show when offer_type is explicitly "buy1get1"
+            const isB1G1 = pkg.offer_type === "buy1get1";
+            const b1g1Description = isB1G1 && pkg.free_offer_description && pkg.free_offer_description.trim().length > 0
+              ? pkg.free_offer_description.trim()
+              : null;
 
             return (
               <StaggerItem key={pkg.id}>
@@ -50,15 +63,15 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                     <div className="relative w-full aspect-[4/3] overflow-hidden flex-shrink-0">
                       <Image src={pkg.image_url} alt={pkg.name} fill className="object-cover object-top" />
 
-                      {/* ✅ SHOW ONLY IF DISCOUNT > 0 */}
-                      {discount > 0 && (
+                      {/* DISCOUNT BADGE: only if discount_percent is a real positive number */}
+                      {discount !== null && (
                         <div className="absolute top-3 right-3 bg-[var(--gold)] text-white text-[11px] font-black px-3 py-1.5 rounded-full">
                           {discount}% OFF
                         </div>
                       )}
 
-                      {/* ✅ B1G1 CLEAN STRIP */}
-                      {pkg.offer_type === "buy1get1" && (
+                      {/* B1G1 STRIP: only if offer_type is exactly "buy1get1" */}
+                      {isB1G1 && (
                         <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[12px] px-4 py-2 font-semibold">
                           🎁 Buy 1 Get 1 Free
                         </div>
@@ -86,15 +99,15 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       </p>
                     )}
 
-                    {/* ✅ FIXED PRICE */}
-                    {hasPrice && (
+                    {/* PRICE: only rendered when at least one valid price exists */}
+                    {hasPrice && mainPrice !== null && (
                       <div className="flex items-baseline gap-3 mb-3">
                         <span className="font-jost text-[2rem] font-black text-[#1F2937]">
                           {formatPrice(mainPrice)}
                         </span>
 
-                        {/* CUT PRICE ONLY IF REAL */}
-                        {offer > 0 && actual > 0 && actual !== offer && (
+                        {/* STRIKE PRICE: only when both offer & actual exist and differ */}
+                        {showStrike && actual !== null && (
                           <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
                             {formatPrice(actual)}
                           </span>
@@ -102,10 +115,10 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       </div>
                     )}
 
-                    {/* ✅ B1G1 DESCRIPTION */}
-                    {pkg.offer_type === "buy1get1" && pkg.free_offer_description && (
+                    {/* B1G1 DESCRIPTION: only if B1G1 and description is non-empty */}
+                    {b1g1Description !== null && (
                       <p className="text-[13px] text-[var(--gold-dark)] mb-4">
-                        🎁 {pkg.free_offer_description}
+                        🎁 {b1g1Description}
                       </p>
                     )}
 
