@@ -117,7 +117,9 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
 
   const brandWord      = (config.salon_name || "Cyra Salon").split(" ")[0].toUpperCase();
   const placement      = config.logo_placement ?? "none";
-  const showNavbarLogo = !!config.logo_url && (placement === "navbar" || placement === "both");
+  // Change 4: prefer section-specific logo, fall back to global logo_url
+  const navbarLogo     = config.navbar_logo_url || config.logo_url;
+  const showNavbarLogo = !!navbarLogo && (placement === "navbar" || placement === "both");
 
   return (
     <>
@@ -150,7 +152,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
             <button onClick={() => handleNavClick("#home")} aria-label="Go home" className="flex-shrink-0">
               <BrandBlock
                 brandWord={brandWord}
-                logoUrl={config.logo_url}
+                logoUrl={navbarLogo}
                 showLogo={showNavbarLogo}
                 size="navbar"
               />
@@ -197,7 +199,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                 </button>
                 <BrandBlock
                   brandWord={brandWord}
-                  logoUrl={config.logo_url}
+                  logoUrl={navbarLogo}
                   showLogo={showNavbarLogo}
                   size="sidebar"
                 />
