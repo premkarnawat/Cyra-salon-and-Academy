@@ -89,10 +89,11 @@ export function useSiteSettings() {
           const brandFont = (merged as SiteConfig & { brand_font?: string }).brand_font;
           const bodyFont  = (merged as SiteConfig & { body_font?: string }).body_font;
 
-          // Load all non-default fonts
+          // Load all non-default fonts (Marcellus already loaded in layout.tsx head)
+          const PRELOADED = ["Jost", "Marcellus", "Cinzel Decorative", "Cormorant Garamond"];
           const toLoad: string[] = [];
-          if (brandFont && brandFont !== "Cinzel Decorative") toLoad.push(brandFont);
-          if (bodyFont  && bodyFont  !== "Jost")              toLoad.push(bodyFont);
+          if (brandFont && !PRELOADED.includes(brandFont)) toLoad.push(brandFont);
+          if (bodyFont  && !PRELOADED.includes(bodyFont))  toLoad.push(bodyFont);
           if (toLoad.length) injectFontLink(buildFontUrl(toLoad));
 
           // Apply — wait one tick so the link tag is in DOM first
