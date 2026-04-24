@@ -41,7 +41,7 @@ export interface Package {
   name: string;
   description?: string;
   actual_price: number;
-  offer_price: number;
+  offer_price?: number;
   discount_percent: number;
   image_url?: string;
   badge?: string;
@@ -52,6 +52,7 @@ export interface Package {
   offer_type?: "normal" | "buy1get1";
   b1g1_free_package?: string;
   b1g1_details?: string;
+  free_offer_description?: string;
 }
 
 export interface RateCard {
@@ -115,6 +116,8 @@ export interface SiteConfig {
    * "both"   — logo appears in both navbar and form
    */
   logo_placement?: "none" | "navbar" | "form" | "both";
+  about_text?: string;
+  about_image_url?: string;
 }
 
 export interface FormLockState {
