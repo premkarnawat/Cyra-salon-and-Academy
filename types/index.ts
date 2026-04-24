@@ -101,20 +101,17 @@ export interface SiteConfig {
   whatsapp: string;
   email: string;
   address: string;
+  address2?: string;          // Change 3: second franchise address
   opening_hours: string;
   logo_url: string;
+  navbar_logo_url?: string;   // Change 4: separate navbar logo
+  form_logo_url?: string;     // Change 4: separate form logo
+  footer_logo_url?: string;   // Change 4: separate footer logo
   opening_bg_url: string;
   opening_logo_url: string;
   footer_copyright: string;
   instagram_url: string;
   facebook_url: string;
-  /**
-   * Controls where the logo is displayed:
-   * "none"   — text only everywhere (default when no logo uploaded)
-   * "navbar" — logo appears only in navbar (left of CYRA text)
-   * "form"   — logo appears only at top of form popup
-   * "both"   — logo appears in both navbar and form
-   */
   logo_placement?: "none" | "navbar" | "form" | "both";
   about_text?: string;
   about_image_url?: string;
