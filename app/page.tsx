@@ -16,7 +16,6 @@ import { Footer }          from "@/components/sections/Footer";
 import { FormLockModal }   from "@/components/sections/FormLockModal";
 import { useFormLock }     from "@/hooks/useFormLock";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { DEFAULT_CONFIG }  from "@/lib/constants";
 import type { Banner, Offer, Package, RateCard, GalleryItem, Review } from "@/types";
 
 export default function HomePage() {
@@ -31,7 +30,7 @@ export default function HomePage() {
   const [gallery,   setGallery]   = useState<GalleryItem[]>([]);
   const [reviews,   setReviews]   = useState<Review[]>([]);
 
-  const { config } = useSiteSettings();
+  const { config, loading } = useSiteSettings();
   const {
     isLocked,
     isSubmitted,
@@ -76,10 +75,16 @@ export default function HomePage() {
 
   return (
     <>
-      {showOpening && (
+      {/* While config is loading: show a plain dark screen — no flicker, no Unsplash */}
+      {showOpening && loading && (
+        <div className="fixed inset-0 z-[9999] bg-[#0C0B09]" />
+      )}
+
+      {/* Once config is ready: single clean splash — DB image + logo + text together */}
+      {showOpening && !loading && (
         <OpeningScreen
-          bgUrl={config.opening_bg_url || DEFAULT_CONFIG.opening_bg_url}
-          logoUrl={config.opening_logo_url || config.logo_url}
+          bgUrl={config.opening_bg_url || undefined}
+          logoUrl={config.opening_logo_url || config.logo_url || undefined}
           salonName={config.salon_name?.split(" ")[0] || "Cyra"}
           onComplete={handleOpeningComplete}
         />
@@ -89,7 +94,7 @@ export default function HomePage() {
       <FormLockModal
         isOpen={isLocked && !isSubmitted}
         onSuccess={onFormSuccess}
-        logoUrl={config.logo_url}
+        logoUrl={config.form_logo_url || config.logo_url}
         logoPlacement={placement}
       />
 
