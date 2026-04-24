@@ -11,7 +11,14 @@ import toast from "react-hot-toast";
 import { DEFAULT_CONFIG } from "@/lib/constants";
 import type { SiteConfig } from "@/types";
 
-interface ExtConfig extends SiteConfig { brand_font?:string; body_font?:string; }
+interface ExtConfig extends SiteConfig {
+  brand_font?: string;
+  body_font?: string;
+  navbar_logo_url?: string;
+  form_logo_url?: string;
+  footer_logo_url?: string;
+  address2?: string;
+}
 
 const BRAND_FONTS=[
   {value:"Cinzel Decorative",label:"Cinzel Decorative",sample:"CYRA"},
@@ -20,10 +27,11 @@ const BRAND_FONTS=[
   {value:"Marcellus",label:"Marcellus",sample:"CYRA"},
 ];
 const BODY_FONTS=[
-  {value:"Jost",label:"Jost (Default)",sample:"Salon & Academy"},
-  {value:"DM Sans",label:"DM Sans",sample:"Salon & Academy"},
-  {value:"Lato",label:"Lato",sample:"Salon & Academy"},
-  {value:"Nunito",label:"Nunito",sample:"Salon & Academy"},
+  {value:"Jost",      label:"Jost (Default)", sample:"Salon & Academy"},
+  {value:"Marcellus", label:"Marcellus",       sample:"Salon & Academy"},
+  {value:"DM Sans",   label:"DM Sans",         sample:"Salon & Academy"},
+  {value:"Lato",      label:"Lato",            sample:"Salon & Academy"},
+  {value:"Nunito",    label:"Nunito",          sample:"Salon & Academy"},
 ];
 
 const PLACEMENT_OPTIONS: { value: SiteConfig["logo_placement"]; label: string; desc: string }[] = [
@@ -100,49 +108,87 @@ export default function SettingsPage() {
 
           {/* ── LOGO TAB ── */}
           {tab==="logo" && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h3 className="font-semibold text-[#111827]">Logo Settings</h3>
+              <p className="text-xs text-[#6B7280] -mt-4">
+                Upload separate logos for each section. If a section-specific logo is not set, it falls back to the <strong>Global Logo</strong>.
+              </p>
 
-              {/* Upload */}
-              <div>
-                <label className={lbl}>Logo Image</label>
-                <p className="text-xs text-[#9CA3AF] mb-2">Upload PNG with transparent background. Recommended: square or wide format.</p>
-                <ImageUpload value={config.logo_url} onChange={url=>set("logo_url",url)}
-                  bucket="settings" folder="logo" label="Upload Logo (PNG / WebP)"/>
+              {/* Global / fallback logo */}
+              <div className="rounded-xl border border-[#E5E7EB] p-4 space-y-3">
+                <div>
+                  <label className={lbl}>Global Logo <span className="text-[#9CA3AF] font-normal">(fallback for all sections)</span></label>
+                  <p className="text-xs text-[#9CA3AF] mb-2">Used wherever no section-specific logo is uploaded.</p>
+                  <ImageUpload value={config.logo_url} onChange={url=>set("logo_url",url)}
+                    bucket="settings" folder="logo" label="Upload Global Logo"/>
+                </div>
+                {config.logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img src={config.logo_url} alt="Global" className="h-12 w-auto object-contain rounded" />
+                    <button type="button" onClick={()=>set("logo_url","")} className="text-xs text-red-500 hover:text-red-600 underline">Remove</button>
+                  </div>
+                )}
               </div>
 
-              {/* Preview */}
-              {config.logo_url && (
-                <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
-                  <p className="text-[10px] tracking-widest uppercase text-[#9CA3AF] mb-3">Preview</p>
-                  <div className="flex items-center gap-6 flex-wrap">
-                    <div>
-                      <p className="text-[10px] text-[#9CA3AF] mb-1.5">Navbar size</p>
-                      <img src={config.logo_url} alt="Logo" className="h-9 w-auto object-contain" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#9CA3AF] mb-1.5">Form size</p>
-                      <img src={config.logo_url} alt="Logo" className="h-16 w-auto object-contain" />
-                    </div>
-                  </div>
+              {/* Navbar logo */}
+              <div className="rounded-xl border border-[#E5E7EB] p-4 space-y-3">
+                <div>
+                  <label className={lbl}>Navbar Logo</label>
+                  <p className="text-xs text-[#9CA3AF] mb-2">Shown in the top navigation bar.</p>
+                  <ImageUpload value={(config as ExtConfig).navbar_logo_url||""} onChange={url=>set("navbar_logo_url" as keyof ExtConfig,url)}
+                    bucket="settings" folder="logo" label="Upload Navbar Logo"/>
                 </div>
-              )}
+                {(config as ExtConfig).navbar_logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img src={(config as ExtConfig).navbar_logo_url} alt="Navbar" className="h-9 w-auto object-contain rounded" />
+                    <button type="button" onClick={()=>set("navbar_logo_url" as keyof ExtConfig,"")} className="text-xs text-red-500 hover:text-red-600 underline">Remove</button>
+                  </div>
+                )}
+              </div>
 
-              {/* Placement selector */}
+              {/* Form logo */}
+              <div className="rounded-xl border border-[#E5E7EB] p-4 space-y-3">
+                <div>
+                  <label className={lbl}>Form Logo</label>
+                  <p className="text-xs text-[#9CA3AF] mb-2">Shown at the top of the lead capture form popup.</p>
+                  <ImageUpload value={(config as ExtConfig).form_logo_url||""} onChange={url=>set("form_logo_url" as keyof ExtConfig,url)}
+                    bucket="settings" folder="logo" label="Upload Form Logo"/>
+                </div>
+                {(config as ExtConfig).form_logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img src={(config as ExtConfig).form_logo_url} alt="Form" className="h-16 w-auto object-contain rounded" />
+                    <button type="button" onClick={()=>set("form_logo_url" as keyof ExtConfig,"")} className="text-xs text-red-500 hover:text-red-600 underline">Remove</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer logo */}
+              <div className="rounded-xl border border-[#E5E7EB] p-4 space-y-3">
+                <div>
+                  <label className={lbl}>Footer Logo</label>
+                  <p className="text-xs text-[#9CA3AF] mb-2">Shown in the footer brand column.</p>
+                  <ImageUpload value={(config as ExtConfig).footer_logo_url||""} onChange={url=>set("footer_logo_url" as keyof ExtConfig,url)}
+                    bucket="settings" folder="logo" label="Upload Footer Logo"/>
+                </div>
+                {(config as ExtConfig).footer_logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img src={(config as ExtConfig).footer_logo_url} alt="Footer" className="h-14 w-auto object-contain rounded" />
+                    <button type="button" onClick={()=>set("footer_logo_url" as keyof ExtConfig,"")} className="text-xs text-red-500 hover:text-red-600 underline">Remove</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Placement selector — still relevant for global logo */}
               <div>
-                <label className={lbl}>Logo Placement</label>
-                <p className="text-xs text-[#9CA3AF] mb-3">
-                  Choose where to show the logo. <strong>Text (CYRA + Salon & Academy) is always visible</strong> — the logo is optional and appears alongside the text.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label className={lbl}>Logo Placement <span className="text-[#9CA3AF] font-normal">(applies to Global Logo only)</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                   {PLACEMENT_OPTIONS.map(opt=>(
                     <button key={opt.value} type="button"
                       onClick={()=>set("logo_placement" as keyof ExtConfig, opt.value as string)}
-                      disabled={!config.logo_url && opt.value!=="none"}
                       className={`flex flex-col items-start p-3.5 rounded-xl border-2 text-left transition-all ${
                         logoPlacement===opt.value
                           ?"border-[var(--gold)] bg-[rgba(191,160,106,0.06)]"
-                          :"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)] disabled:opacity-40 disabled:cursor-not-allowed"
+                          :"border-[#E5E7EB] hover:border-[rgba(191,160,106,0.4)]"
                       }`}>
                       <span className={`text-sm font-semibold mb-0.5 ${logoPlacement===opt.value?"text-[var(--gold-dark)]":"text-[#374151]"}`}>
                         {opt.label}
@@ -151,17 +197,7 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
-                {!config.logo_url && (
-                  <p className="text-xs text-amber-600 mt-2">⚠ Upload a logo first to enable placement options.</p>
-                )}
               </div>
-
-              {config.logo_url && (
-                <button type="button" onClick={()=>{ set("logo_url",""); set("logo_placement" as keyof ExtConfig,"none"); }}
-                  className="text-xs text-red-500 hover:text-red-600 underline">
-                  Remove logo
-                </button>
-              )}
             </div>
           )}
 
@@ -175,8 +211,10 @@ export default function SettingsPage() {
                     <input type={t||"text"} value={(config[k] as string)||""} onChange={e=>set(k,e.target.value)} placeholder={l} className={inp}/></div>
                 ))}
               </div>
-              <div><label className={lbl}>Address</label>
+              <div><label className={lbl}>Address <span className="text-[#9CA3AF] font-normal">(Location 1)</span></label>
                 <textarea rows={2} value={config.address||""} onChange={e=>set("address",e.target.value)} className={`${inp} resize-none`}/></div>
+              <div><label className={lbl}>Address 2 <span className="text-[#9CA3AF] font-normal">(Branch / Franchise — optional)</span></label>
+                <textarea rows={2} value={(config as ExtConfig).address2||""} onChange={e=>set("address2" as keyof ExtConfig,e.target.value)} placeholder="Leave empty to hide in footer" className={`${inp} resize-none`}/></div>
             </div>
           )}
 
