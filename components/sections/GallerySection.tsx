@@ -83,19 +83,34 @@ function SlideItem({
           />
         </div>
       ) : (
-        // 🔥 FINAL FIX: IMAGE CONTROLS FRAME (NO CROP, NO GAPS)
-        <div className="w-full flex justify-center bg-white rounded-t-3xl overflow-hidden">
+        // FIXED LANDSCAPE FRAME: no crop, object-contain, theme-aware bg
+        <div
+          className="w-full"
+          style={{
+            aspectRatio: "16/9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          {/* Theme-aware background — dark in dark mode, white in light */}
+          <div
+            className="absolute inset-0 bg-white dark:bg-[#0C0B09]"
+            style={{ zIndex: 0 }}
+          />
           <Image
             src={item.media_url}
             alt={item.title || "Gallery"}
-            width={1200}
-            height={800}
-            className="w-full h-auto object-contain"
+            fill
+            className="object-contain"
             sizes="(max-width:640px) 100vw,(max-width:1280px) 95vw,1200px"
             priority={priority}
             loading={priority ? "eager" : "lazy"}
             quality={85}
             draggable={false}
+            style={{ zIndex: 1 }}
           />
 
           {/* Title Overlay */}
@@ -108,6 +123,7 @@ function SlideItem({
                 right: 0,
                 padding: "0 20px 16px",
                 pointerEvents: "none",
+                zIndex: 2,
               }}
             >
               <p
