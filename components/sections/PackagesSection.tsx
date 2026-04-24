@@ -32,12 +32,15 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
           {list.map(pkg => {
             const featured = pkg.id === featuredId;
 
-            // ✅ SAFE VALUES (NO TYPESCRIPT ERROR)
-            const offerPrice  = pkg.offer_price ?? 0;
-            const actualPrice = pkg.actual_price ?? 0;
+            // ✅ SAFE VALUES
+            const offer  = pkg.offer_price ?? 0;
+            const actual = pkg.actual_price ?? 0;
 
-            // ✅ MAIN PRICE LOGIC
-            const mainPrice = offerPrice > 0 ? offerPrice : actualPrice;
+            // ❌ If both 0 → hide pricing
+            const hasPrice = offer > 0 || actual > 0;
+
+            // ✅ Main price logic
+            const mainPrice = offer > 0 ? offer : actual;
 
             return (
               <StaggerItem key={pkg.id}>
@@ -71,28 +74,30 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       <p className="text-[14px] text-[#4B5563] mb-3 font-light leading-relaxed">{pkg.description}</p>
                     )}
 
-                    {/* ✅ FIXED PRICING */}
-                    <div className="flex items-baseline gap-3 mb-3">
-                      <span className="font-jost text-[2rem] font-black text-[#1F2937]">
-                        {formatPrice(mainPrice)}
-                      </span>
+                    {/* ✅ FINAL FIXED PRICING */}
+                    {hasPrice && (
+                      <div className="flex items-baseline gap-3 mb-3">
+                        <span className="font-jost text-[2rem] font-black text-[#1F2937]">
+                          {formatPrice(mainPrice)}
+                        </span>
 
-                      {/* Show cut price ONLY if real discount exists */}
-                      {offerPrice > 0 &&
-                        actualPrice > 0 &&
-                        actualPrice !== offerPrice && (
+                        {/* Show cut price only if valid */}
+                        {offer > 0 && actual > 0 && actual !== offer && (
                           <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
-                            {formatPrice(actualPrice)}
+                            {formatPrice(actual)}
                           </span>
                         )}
-                    </div>
+                      </div>
+                    )}
 
+                    {/* Free Offer */}
                     {pkg.free_offer_description && (
                       <p className="text-[13px] text-[var(--gold-dark)] font-medium mb-4 leading-snug">
                         🎁 {pkg.free_offer_description}
                       </p>
                     )}
 
+                    {/* Features */}
                     <ul className="space-y-3 mb-6 flex-1 mt-2">
                       {pkg.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
@@ -102,6 +107,7 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                       ))}
                     </ul>
 
+                    {/* CTA */}
                     <a
                       href={getWhatsAppLink(WHATSAPP_MESSAGES.booking(`${pkg.name} Package`))}
                       target="_blank" rel="noreferrer"
