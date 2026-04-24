@@ -192,7 +192,7 @@ export default function PackagesPage() {
                     </div>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-lg text-[#111827]">{formatPrice(p.offer_price)}</span>
+                    <span className="font-bold text-lg text-[#111827]">{formatPrice(p.offer_price ?? p.actual_price)}</span>
                     <span className="text-sm line-through text-[#9CA3AF]">{formatPrice(p.actual_price)}</span>
                   </div>
                   <ul className="mt-2 space-y-1">{p.features?.slice(0,3).map((f,i)=><li key={i} className="text-xs text-[#6B7280]">• {f}</li>)}</ul>
