@@ -78,7 +78,6 @@ export function AboutSection({ aboutText, aboutImageUrl }: AboutSectionProps) {
                   marginBottom: "0.75rem",
                 }}
               >
-                ✦ Our Story
               </p>
 
               <h2
