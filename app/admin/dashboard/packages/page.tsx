@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import type { Package } from "@/types";
 
 const EMPTY: Partial<Package> = {
-  name:"", description:"", actual_price:0, offer_price:undefined, discount_percent:0,
+  name:"", description:"", actual_price:undefined, offer_price:undefined, discount_percent:undefined,
   badge:"", image_url:"", features:[], is_active:true, sort_order:0,
   offer_type:"normal", b1g1_free_package:"", b1g1_details:"", free_offer_description:"",
 };
@@ -41,7 +41,14 @@ export default function PackagesPage() {
   async function save() {
     if(!form.name) return toast.error("Package name is required");
     setSaving(true);
-    const body=editing?{...form,id:editing}:form;
+    // Strip zeros/empty strings for numeric fields so DB stores NULL not 0
+    const cleaned: Partial<Package> = {
+      ...form,
+      actual_price:    (form.actual_price    && form.actual_price    > 0) ? form.actual_price    : undefined,
+      offer_price:     (form.offer_price     && form.offer_price     > 0) ? form.offer_price     : undefined,
+      discount_percent:(form.discount_percent && form.discount_percent > 0) ? form.discount_percent : undefined,
+    };
+    const body=editing?{...cleaned,id:editing}:cleaned;
     const r=await adminFetch("/api/packages",{method:editing?"PUT":"POST",body:body as Record<string,unknown>,token});
     const d=await r.json();
     if(d.error) toast.error(d.error);
@@ -94,9 +101,9 @@ export default function PackagesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input placeholder="Package Name *" value={form.name||""} onChange={e=>setForm({...form,name:e.target.value})} className={inp}/>
               <input placeholder="Badge (e.g. Most Popular)" value={form.badge||""} onChange={e=>setForm({...form,badge:e.target.value})} className={inp}/>
-              <input type="number" placeholder="Actual Price ₹" value={form.actual_price||""} onChange={e=>setForm({...form,actual_price:+e.target.value})} className={inp}/>
+              <input type="number" placeholder="Actual Price ₹" value={form.actual_price||""} onChange={e=>setForm({...form,actual_price:e.target.value?+e.target.value:undefined})} className={inp}/>
               <input type="number" placeholder="Offer Price ₹ (optional)" value={form.offer_price||""} onChange={e=>setForm({...form,offer_price:e.target.value?+e.target.value:undefined})} className={inp}/>
-              <input type="number" placeholder="Discount %" value={form.discount_percent||""} onChange={e=>setForm({...form,discount_percent:+e.target.value})} className={inp}/>
+              <input type="number" placeholder="Discount % (leave blank if none)" value={form.discount_percent||""} onChange={e=>setForm({...form,discount_percent:e.target.value?+e.target.value:undefined})} className={inp}/>
               <input type="number" placeholder="Sort Order" value={form.sort_order||0} onChange={e=>setForm({...form,sort_order:+e.target.value})} className={inp}/>
               <textarea placeholder="Description" rows={2} value={form.description||""} onChange={e=>setForm({...form,description:e.target.value})} className={`${inp} md:col-span-2 resize-none`}/>
             </div>
@@ -168,7 +175,10 @@ export default function PackagesPage() {
                 {p.image_url&&(
                   <div className="relative h-32">
                     <Image src={p.image_url} alt={p.name} fill className="object-cover" unoptimized/>
-                    <div className="absolute top-2 right-2 bg-[var(--gold)] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{p.discount_percent}% OFF</div>
+                    {/* Only show discount badge if discount_percent is a real positive number */}
+                    {p.discount_percent != null && p.discount_percent > 0 && (
+                      <div className="absolute top-2 right-2 bg-[var(--gold)] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{p.discount_percent}% OFF</div>
+                    )}
                     {p.offer_type==="buy1get1" && (
                       <div className="absolute bottom-0 left-0 right-0 bg-[#1a120a]/80 px-2 py-1 flex items-center gap-1">
                         <Gift size={10} className="text-[var(--gold-light)]"/>
@@ -191,10 +201,18 @@ export default function PackagesPage() {
                       <button onClick={()=>del(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-[#6B7280] hover:text-red-500"><Trash2 size={13}/></button>
                     </div>
                   </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-lg text-[#111827]">{formatPrice(p.offer_price ?? p.actual_price)}</span>
-                    <span className="text-sm line-through text-[#9CA3AF]">{formatPrice(p.actual_price)}</span>
-                  </div>
+                  {/* Price preview — same logic as frontend: only show what exists */}
+                  {((p.offer_price != null && p.offer_price > 0) || (p.actual_price != null && p.actual_price > 0)) && (
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-bold text-lg text-[#111827]">
+                        {formatPrice((p.offer_price != null && p.offer_price > 0) ? p.offer_price : p.actual_price)}
+                      </span>
+                      {/* Strike price only when both exist and differ */}
+                      {p.offer_price != null && p.offer_price > 0 && p.actual_price != null && p.actual_price > 0 && p.actual_price !== p.offer_price && (
+                        <span className="text-sm line-through text-[#9CA3AF]">{formatPrice(p.actual_price)}</span>
+                      )}
+                    </div>
+                  )}
                   <ul className="mt-2 space-y-1">{p.features?.slice(0,3).map((f,i)=><li key={i} className="text-xs text-[#6B7280]">• {f}</li>)}</ul>
                   {p.b1g1_free_package&&<p className="mt-1.5 text-[11px] text-[var(--gold-dark)] font-medium">🎁 Free: {p.b1g1_free_package}</p>}
                   {p.free_offer_description&&<p className="mt-1 text-[11px] text-[var(--gold-dark)] font-medium">🎁 {p.free_offer_description}</p>}
