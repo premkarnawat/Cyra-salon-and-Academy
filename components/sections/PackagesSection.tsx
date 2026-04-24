@@ -67,13 +67,28 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                     )}
 
                     {/* Pricing */}
-                    <div className="flex items-baseline gap-3 mb-5">
-                      <span className="font-jost text-[2rem] font-black text-[#1F2937]">{formatPrice(pkg.offer_price)}</span>
-                      <span className="font-jost text-[15px] line-through text-[#9CA3AF]">{formatPrice(pkg.actual_price)}</span>
+                    <div className="flex items-baseline gap-3 mb-3">
+                      {pkg.offer_price ? (
+                        <>
+                          <span className="font-jost text-[2rem] font-black text-[#1F2937]">{formatPrice(pkg.offer_price)}</span>
+                          {pkg.actual_price > 0 && (
+                            <span className="font-jost text-[15px] line-through text-[#9CA3AF]">{formatPrice(pkg.actual_price)}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="font-jost text-[2rem] font-black text-[#1F2937]">{formatPrice(pkg.actual_price)}</span>
+                      )}
                     </div>
 
+                    {/* Free Offer Description */}
+                    {pkg.free_offer_description && (
+                      <p className="text-[13px] text-[var(--gold-dark)] font-medium mb-4 leading-snug">
+                        🎁 {pkg.free_offer_description}
+                      </p>
+                    )}
+
                     {/* Features — LARGER, DARKER, MORE READABLE */}
-                    <ul className="space-y-3 mb-6 flex-1">
+                    <ul className="space-y-3 mb-6 flex-1 mt-2">
                       {pkg.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                           <Check size={15} className="text-[var(--gold)] mt-0.5 flex-shrink-0" />
