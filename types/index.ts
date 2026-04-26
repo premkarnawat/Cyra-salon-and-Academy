@@ -53,6 +53,7 @@ export interface Package {
   b1g1_free_package?: string;
   b1g1_details?: string;
   free_offer_description?: string;
+  price_suffix?: string; // e.g. "onwards" — shown inline to the right of price
 }
 
 export interface RateCard {
