@@ -15,7 +15,7 @@ import type { Package } from "@/types";
 const EMPTY: Partial<Package> = {
   name:"", description:"", actual_price:undefined, offer_price:undefined, discount_percent:undefined,
   badge:"", image_url:"", features:[], is_active:true, sort_order:0,
-  offer_type:"normal", b1g1_free_package:"", b1g1_details:"", free_offer_description:"",
+  offer_type:"normal", b1g1_free_package:"", b1g1_details:"", free_offer_description:"", price_suffix:"",
 };
 
 export default function PackagesPage() {
@@ -104,6 +104,7 @@ export default function PackagesPage() {
               <input type="number" placeholder="Actual Price ₹" value={form.actual_price||""} onChange={e=>setForm({...form,actual_price:e.target.value?+e.target.value:undefined})} className={inp}/>
               <input type="number" placeholder="Offer Price ₹ (optional)" value={form.offer_price||""} onChange={e=>setForm({...form,offer_price:e.target.value?+e.target.value:undefined})} className={inp}/>
               <input type="number" placeholder="Discount % (leave blank if none)" value={form.discount_percent||""} onChange={e=>setForm({...form,discount_percent:e.target.value?+e.target.value:undefined})} className={inp}/>
+              <input placeholder='Price suffix (e.g. "onwards") — optional' value={form.price_suffix||""} onChange={e=>setForm({...form,price_suffix:e.target.value})} className={inp}/>
               <input type="number" placeholder="Sort Order" value={form.sort_order||0} onChange={e=>setForm({...form,sort_order:+e.target.value})} className={inp}/>
               <textarea placeholder="Description" rows={2} value={form.description||""} onChange={e=>setForm({...form,description:e.target.value})} className={`${inp} md:col-span-2 resize-none`}/>
             </div>
