@@ -111,7 +111,7 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
 
                     {/* PRICE BLOCK — only when at least one valid price exists */}
                     {hasPrice && mainPrice !== null && (
-                      <div className="flex items-baseline gap-3 mb-3">
+                      <div className="flex items-baseline gap-3 mb-3 flex-wrap">
                         {/* Main price — always bold, never ₹0 */}
                         <span className="font-jost text-[2rem] font-black text-[#1F2937]">
                           {formatPrice(mainPrice)}
@@ -121,6 +121,13 @@ export function PackagesSection({ packages = [] }: { packages?: Package[] }) {
                         {showStrike && (
                           <span className="font-jost text-[15px] line-through text-[#9CA3AF]">
                             {formatPrice(actual!)}
+                          </span>
+                        )}
+
+                        {/* Price suffix (e.g. "onwards") — only when provided and non-empty */}
+                        {pkg.price_suffix && pkg.price_suffix.trim().length > 0 && (
+                          <span className="font-jost text-[13px] font-medium text-[#6B7280] leading-none self-end mb-[5px]">
+                            {pkg.price_suffix.trim()}
                           </span>
                         )}
                       </div>
