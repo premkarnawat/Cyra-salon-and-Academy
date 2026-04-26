@@ -45,7 +45,7 @@ function Field({ id, label, type, value, onChange, placeholder, icon: Icon, maxL
           <Icon size={15} strokeWidth={1.8} className={`transition-colors duration-300 ${focused ? "text-[var(--gold)]" : "text-[var(--gold-dark)]/40"}`} />
         </div>
         <label htmlFor={id} className={`absolute left-11 z-10 pointer-events-none font-jost transition-all duration-250 ${
-          floated ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/60 tracking-wide"
+          floated ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#6B6257] tracking-wide"
         }`}>{label}</label>
         <input id={id} type={type} value={value}
           onChange={e => onChange(e.target.value)}
