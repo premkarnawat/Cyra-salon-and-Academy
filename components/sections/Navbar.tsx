@@ -89,7 +89,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                 className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl border border-[rgba(191,160,106,0.3)] hover:border-[var(--gold)] hover:bg-[rgba(191,160,106,0.07)] transition-all">
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
-                <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
+                <span className="block w-[11px] h-[1.5px] bg-[#1F2937] self-start ml-[3px]" />
               </button>
 
               <button onClick={() => handleNavClick("#home")}
@@ -136,12 +136,12 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
               onClick={() => setSidebarOpen(false)} />
 
             <motion.aside
-              className="fixed top-0 left-0 bottom-0 z-[1000] w-[min(310px,88vw)] bg-white flex flex-col"
+              className="fixed top-0 left-0 bottom-0 z-[1000] w-[min(310px,88vw)] bg-white flex flex-col text-[#1F2937]"
               initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
             >
               <div className="relative px-7 pt-10 pb-7 border-b">
                 <button onClick={() => setSidebarOpen(false)}
-                  className="absolute top-5 right-5 w-9 h-9 flex items-center justify-center">
+                  className="absolute top-5 right-5 w-9 h-9 flex items-center justify-center text-[#1F2937]">
                   <X size={15}/>
                 </button>
 
@@ -156,7 +156,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
               <nav className="flex-1 py-3">
                 {NAV_LINKS.map((link) => (
                   <button key={link.href} onClick={() => handleNavClick(link.href)}
-                    className="w-full text-left px-7 py-[13px]">
+                    className="w-full text-left px-7 py-[13px] text-[#1F2937]">
                     {link.label}
                   </button>
                 ))}
