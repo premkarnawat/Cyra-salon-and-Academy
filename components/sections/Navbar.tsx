@@ -89,7 +89,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                 className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl border border-[rgba(191,160,106,0.3)] hover:border-[var(--gold)] hover:bg-[rgba(191,160,106,0.07)] transition-all">
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
-                <span className="block w-[11px] h-[1.5px] bg-[#1F2937] self-start ml-[3px]" />
+                <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
               </button>
 
               <button onClick={() => handleNavClick("#home")}
