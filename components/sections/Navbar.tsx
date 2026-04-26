@@ -89,7 +89,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
                 className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl border border-[rgba(191,160,106,0.3)] hover:border-[var(--gold)] hover:bg-[rgba(191,160,106,0.07)] transition-all">
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
                 <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
-                <span className="block w-[11px] h-[1.5px] bg-[#1F2937] self-start ml-[3px]" />
+                <span className="block w-[17px] h-[1.5px] bg-[#1F2937]" />
               </button>
 
               <button onClick={() => handleNavClick("#home")}
@@ -136,7 +136,7 @@ export function Navbar({ config, onExploreOffers }: NavbarProps) {
               onClick={() => setSidebarOpen(false)} />
 
             <motion.aside
-              className="fixed top-0 left-0 bottom-0 z-[1000] w-[min(310px,88vw)] bg-white flex flex-col text-[#1F2937]"
+              className="fixed top-0 left-0 bottom-0 z-[1000] w-[min(310px,88vw)] bg-white flex flex-col"
               initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
             >
               <div className="relative px-7 pt-10 pb-7 border-b">
