@@ -47,6 +47,98 @@
     color: #F0E8D8;
   }
 
+  /* ── Dark mode: Navbar & header ── */
+  .dark header {
+    background-color: var(--dark-800) !important;
+    border-bottom-color: rgba(191,160,106,0.25) !important;
+  }
+
+  /* ── Dark mode: icon buttons in navbar ── */
+  .dark header button span {
+    background-color: #E5D9C5 !important;
+  }
+  .dark header button svg {
+    color: #E5D9C5 !important;
+    stroke: #E5D9C5 !important;
+  }
+
+  /* ── Dark mode: sidebar background & text ── */
+  .dark aside {
+    background-color: var(--dark-700) !important;
+    color: #F0E8D8 !important;
+  }
+  .dark aside button,
+  .dark aside nav button {
+    color: #E5D9C5 !important;
+  }
+  .dark aside .border-b,
+  .dark aside .border-t {
+    border-color: rgba(191,160,106,0.2) !important;
+  }
+  .dark aside button svg {
+    color: #E5D9C5 !important;
+    stroke: #E5D9C5 !important;
+  }
+
+  /* ── Dark mode: section backgrounds ── */
+  .dark section {
+    background-color: var(--dark-900);
+  }
+  .dark section.bg-white,
+  .dark .bg-white {
+    background-color: var(--dark-800) !important;
+  }
+  .dark .bg-\[#F8F9FB\],
+  .dark .bg-\[var\(--cream-100\)\] {
+    background-color: var(--dark-700) !important;
+  }
+
+  /* ── Dark mode: package cards ── */
+  .dark .rounded-3xl.bg-\[#F8F9FB\] {
+    background-color: var(--dark-700) !important;
+    border-color: rgba(191,160,106,0.25) !important;
+  }
+  .dark .text-\[#1F2937\] {
+    color: #F0E8D8 !important;
+  }
+  .dark .text-\[#4B5563\] {
+    color: #C5B99A !important;
+  }
+  .dark .text-\[#6B7280\] {
+    color: #A8997E !important;
+  }
+  .dark .text-\[#9CA3AF\] {
+    color: #7A6E5C !important;
+  }
+  .dark .text-\[#374151\] {
+    color: #D4C9B2 !important;
+  }
+
+  /* ── Dark mode: icons (lucide / svg) ── */
+  .dark svg {
+    color: inherit;
+  }
+
+  /* ── Dark mode: borders ── */
+  .dark .border-\[rgba\(191\,160\,106\,0\.15\)\],
+  .dark .border-\[rgba\(191\,160\,106\,0\.3\)\] {
+    border-color: rgba(191,160,106,0.3) !important;
+  }
+
+  /* ── Dark mode: footer ── */
+  .dark footer {
+    background-color: var(--dark-900) !important;
+    color: #C5B99A !important;
+  }
+  .dark footer * {
+    border-color: rgba(191,160,106,0.15) !important;
+  }
+
+  /* ── Dark mode: announcement strip ── */
+  .dark .bg-\[var\(--dark-800\)\] {
+    background-color: var(--dark-800) !important;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
