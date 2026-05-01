@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,7 +26,15 @@ const NAV_ITEMS = [
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [open,    setOpen]    = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then(d => { if (d?.logo_url) setLogoUrl(d.logo_url); })
+      .catch(() => {});
+  }, []);
 
   async function logout() {
     const supabase = createClient();
@@ -40,11 +48,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white border-r border-[rgba(191,160,106,0.12)]">
-      {/* Brand */}
+      {/* Brand — Task 2: logo if available, text fallback */}
       <div className="px-6 py-7 border-b border-[rgba(191,160,106,0.1)]">
-        <div className="font-cinzel text-xl tracking-[0.22em] text-[var(--gold-dark)]">CYRA</div>
-        <div className="font-marcellus text-[0.5rem] tracking-[0.38em] uppercase text-[var(--gold)] opacity-70 mt-0.5">Admin Panel</div>
-        <div className="mt-3 w-8 h-px bg-gradient-to-r from-[var(--gold)] to-transparent" />
+        {logoUrl ? (
+          <>
+            <img src={logoUrl} alt="Cyra" className="h-10 w-auto object-contain" />
+            <div className="mt-3 w-8 h-px bg-gradient-to-r from-[var(--gold)] to-transparent" />
+          </>
+        ) : (
+          <>
+            <div className="font-cinzel text-xl tracking-[0.22em] text-[var(--gold-dark)]">CYRA</div>
+            <div className="font-marcellus text-[0.5rem] tracking-[0.38em] uppercase text-[var(--gold)] opacity-70 mt-0.5">Admin Panel</div>
+            <div className="mt-3 w-8 h-px bg-gradient-to-r from-[var(--gold)] to-transparent" />
+          </>
+        )}
       </div>
 
       {/* Nav */}
