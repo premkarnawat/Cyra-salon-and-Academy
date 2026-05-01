@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,6 +14,15 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [logoUrl,  setLogoUrl]  = useState<string | null>(null);
+
+  // Task 1: fetch global logo from settings
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then(d => { if (d?.logo_url) setLogoUrl(d.logo_url); })
+      .catch(() => {});
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -59,34 +69,59 @@ export default function AdminLoginPage() {
           <div className="h-[3px] bg-gradient-to-r from-[var(--gold-dark)] via-[var(--gold)] to-[var(--gold-light)]" />
 
           <div className="px-8 py-10">
-            {/* Brand */}
+            {/* Brand — Task 1: show logo if available, else text */}
             <div className="text-center mb-8">
-              <div
-                style={{
-                  fontFamily: "'Cinzel Decorative', serif",
-                  fontSize: "2.2rem",
-                  letterSpacing: "0.28em",
-                  color: "var(--gold-dark)",
-                  lineHeight: 1,
-                  marginBottom: "6px",
-                }}
-              >
-                CYRA
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Marcellus', serif",
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.38em",
-                  textTransform: "uppercase",
-                  color: "var(--gold)",
-                  opacity: 0.8,
-                  marginBottom: "12px",
-                }}
-              >
-                Admin Portal
-              </div>
-              <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto" />
+              {logoUrl ? (
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={logoUrl}
+                    alt="Cyra"
+                    className="h-16 w-auto object-contain mx-auto"
+                  />
+                  <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto" />
+                  <div
+                    style={{
+                      fontFamily: "'Marcellus', serif",
+                      fontSize: "0.6rem",
+                      letterSpacing: "0.38em",
+                      textTransform: "uppercase",
+                      color: "var(--gold)",
+                      opacity: 0.8,
+                    }}
+                  >
+                    Admin Portal
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontFamily: "'Cinzel Decorative', serif",
+                      fontSize: "2.2rem",
+                      letterSpacing: "0.28em",
+                      color: "var(--gold-dark)",
+                      lineHeight: 1,
+                      marginBottom: "6px",
+                    }}
+                  >
+                    CYRA
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'Marcellus', serif",
+                      fontSize: "0.6rem",
+                      letterSpacing: "0.38em",
+                      textTransform: "uppercase",
+                      color: "var(--gold)",
+                      opacity: 0.8,
+                      marginBottom: "12px",
+                    }}
+                  >
+                    Admin Portal
+                  </div>
+                  <div className="w-10 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto" />
+                </>
+              )}
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
