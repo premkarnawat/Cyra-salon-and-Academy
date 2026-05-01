@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Eye, EyeOff } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -10,6 +10,105 @@ import { adminFetch } from "@/lib/adminFetch";
 import toast from "react-hot-toast";
 import { DEFAULT_CONFIG } from "@/lib/constants";
 import type { SiteConfig } from "@/types";
+import { createClient } from "@/lib/supabase/client";
+
+// ── Task 3: Change Password component ─────────────────────────────────────
+function ChangePasswordTab() {
+  const [newPw,     setNewPw]     = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showNew,   setShowNew]   = useState(false);
+  const [showConf,  setShowConf]  = useState(false);
+  const [saving,    setSaving]    = useState(false);
+
+  const inp = "w-full border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] bg-white focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[rgba(191,160,106,0.3)] transition-all";
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPw.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+      if (error) throw new Error(error.message);
+      toast.success("Password updated successfully");
+      setNewPw("");
+      setConfirmPw("");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5 max-w-sm">
+      <h3 className="font-semibold text-[#111827]">Change Password</h3>
+      <p className="text-xs text-[#6B7280] -mt-2">Update your admin account password.</p>
+
+      <form onSubmit={handleChangePassword} className="space-y-4">
+        {/* New Password */}
+        <div>
+          <label className="block text-xs font-semibold text-[#374151] mb-1.5 tracking-wide uppercase">New Password</label>
+          <div className="relative">
+            <input
+              type={showNew ? "text" : "password"}
+              value={newPw}
+              onChange={e => setNewPw(e.target.value)}
+              placeholder="Min. 6 characters"
+              required
+              minLength={6}
+              className={`${inp} pr-10`}
+            />
+            <button type="button" onClick={() => setShowNew(!showNew)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[var(--gold-dark)] transition-colors">
+              {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirm Password */}
+        <div>
+          <label className="block text-xs font-semibold text-[#374151] mb-1.5 tracking-wide uppercase">Confirm Password</label>
+          <div className="relative">
+            <input
+              type={showConf ? "text" : "password"}
+              value={confirmPw}
+              onChange={e => setConfirmPw(e.target.value)}
+              placeholder="Re-enter new password"
+              required
+              className={`${inp} pr-10`}
+            />
+            <button type="button" onClick={() => setShowConf(!showConf)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[var(--gold-dark)] transition-colors">
+              {showConf ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          {confirmPw && newPw !== confirmPw && (
+            <p className="text-[11px] text-red-500 mt-1">Passwords do not match</p>
+          )}
+          {confirmPw && newPw === confirmPw && newPw.length >= 6 && (
+            <p className="text-[11px] text-green-600 mt-1">✓ Passwords match</p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving || !newPw || !confirmPw}
+          className="btn-gold px-5 py-2.5 rounded-lg text-[11.5px] tracking-[0.18em] flex items-center gap-2 disabled:opacity-50"
+        >
+          {saving ? <><Loader2 size={13} className="animate-spin" /> Updating…</> : "Update Password"}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 interface ExtConfig extends SiteConfig {
   brand_font?: string;
@@ -41,14 +140,15 @@ const PLACEMENT_OPTIONS: { value: SiteConfig["logo_placement"]; label: string; d
   { value:"both",   label:"Navbar + Form",  desc:"Logo appears in both navbar and form" },
 ];
 
-type Tab="logo"|"general"|"opening"|"fonts"|"social"|"about";
+type Tab="logo"|"general"|"opening"|"fonts"|"social"|"about"|"security";
 const TABS:{ id:Tab;label:string }[]=[
-  {id:"logo",    label:"🖼 Logo"},
-  {id:"general", label:"General"},
-  {id:"opening", label:"Opening"},
-  {id:"fonts",   label:"Fonts"},
-  {id:"social",  label:"Social"},
-  {id:"about",   label:"About Us"},
+  {id:"logo",     label:"🖼 Logo"},
+  {id:"general",  label:"General"},
+  {id:"opening",  label:"Opening"},
+  {id:"fonts",    label:"Fonts"},
+  {id:"social",   label:"Social"},
+  {id:"about",    label:"About Us"},
+  {id:"security", label:"🔒 Security"},
 ];
 
 export default function SettingsPage() {
@@ -292,6 +392,9 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {/* ── SECURITY ── */}
+          {tab==="security" && <ChangePasswordTab />}
 
           {/* ── SOCIAL ── */}
           {tab==="social" && (
