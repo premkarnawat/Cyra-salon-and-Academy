@@ -74,9 +74,11 @@ function applyFonts(brand?: string, body?: string) {
   }
 }
 
-export function useSiteSettings() {
-  const [config,  setConfig]  = useState<SiteConfig>(DEFAULT_CONFIG as SiteConfig);
-  const [loading, setLoading] = useState(true);
+export function useSiteSettings(initialConfig?: SiteConfig) {
+  const seed = initialConfig ?? DEFAULT_CONFIG as SiteConfig;
+  const [config,  setConfig]  = useState<SiteConfig>(seed);
+  // If seeded from server, we're not "loading" — set false immediately
+  const [loading, setLoading] = useState(!initialConfig);
 
   useEffect(() => {
     fetch("/api/settings")
