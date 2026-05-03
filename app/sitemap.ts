@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://www.cyrasalon.in"; // update if domain differs
+const SITE_URL = "https://www.cyrasalon.com"; // update if domain differs
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
