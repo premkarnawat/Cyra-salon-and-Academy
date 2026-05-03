@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     fetch("/api/settings")
       .then(r => r.json())
-      .then(d => { if (d?.logo_url) setLogoUrl(d.logo_url); })
+      .then(d => { if (d?.logo_url) setLogoUrl(d?.form_logo_url); })
       .catch(() => {});
   }, []);
 
