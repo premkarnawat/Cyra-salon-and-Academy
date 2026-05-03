@@ -5,27 +5,37 @@ import { motion, AnimatePresence } from "framer-motion";
 import { OpeningScreen }   from "@/components/animations/OpeningScreen";
 import { Navbar }          from "@/components/sections/Navbar";
 import { HeroBanner }      from "@/components/sections/HeroBanner";
+import { OffersSection }   from "@/components/sections/OffersSection";
+import { PackagesSection } from "@/components/sections/PackagesSection";
 import { RateCardSection } from "@/components/sections/RateCardSection";
 import { GallerySection }  from "@/components/sections/GallerySection";
+import { ReviewsSection }  from "@/components/sections/ReviewsSection";
+import { AboutSection }    from "@/components/sections/AboutSection";
 import { WhatsAppButton }  from "@/components/sections/WhatsAppButton";
 import { Footer }          from "@/components/sections/Footer";
 import { FormLockModal }   from "@/components/sections/FormLockModal";
 import { useFormLock }     from "@/hooks/useFormLock";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import type { Banner, RateCard, GalleryItem, SiteConfig } from "@/types";
+import type { Banner, Offer, Package, RateCard, GalleryItem, Review, SiteConfig } from "@/types";
 
 // All data fetched server-side and passed as props — no client fetching needed
 interface HomeClientProps {
   initialBanners:   Banner[];
+  initialOffers:    Offer[];
+  initialPackages:  Package[];
   initialRateCards: RateCard[];
   initialGallery:   GalleryItem[];
+  initialReviews:   Review[];
   initialConfig:    SiteConfig;
 }
 
 export function HomeClient({
   initialBanners,
+  initialOffers,
+  initialPackages,
   initialRateCards,
   initialGallery,
+  initialReviews,
   initialConfig,
 }: HomeClientProps) {
   const [showOpening, setShowOpening] = useState(true);
@@ -34,8 +44,11 @@ export function HomeClient({
 
   // Data starts as server-fetched values — no loading flash
   const [banners,   setBanners]   = useState<Banner[]>(initialBanners);
+  const [offers,    setOffers]    = useState<Offer[]>(initialOffers);
+  const [packages,  setPackages]  = useState<Package[]>(initialPackages);
   const [rateCards, setRateCards] = useState<RateCard[]>(initialRateCards);
   const [gallery,   setGallery]   = useState<GalleryItem[]>(initialGallery);
+  const [reviews,   setReviews]   = useState<Review[]>(initialReviews);
 
   // useSiteSettings still used for live config updates (theme toggle etc.)
   // but seeded with server-fetched initialConfig so first paint is instant
@@ -140,9 +153,13 @@ export function HomeClient({
         <Navbar config={config} onExploreOffers={triggerByClick} />
 
         <main>
-          <HeroBanner      banners={banners}   onExploreCTA={isSubmitted ? undefined : triggerByClick} />
+          <HeroBanner      banners={banners}     onExploreCTA={isSubmitted ? undefined : triggerByClick} />
+          <OffersSection   offers={offers} />
+          <PackagesSection packages={packages} />
+          <AboutSection    aboutText={config.about_text} aboutImageUrl={config.about_image_url} />
           <RateCardSection rateCards={rateCards} />
           <GallerySection  gallery={gallery} />
+          <ReviewsSection  reviews={reviews} />
         </main>
 
         <Footer config={config} />
