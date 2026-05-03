@@ -45,7 +45,7 @@ function Field({ id, label, type, value, onChange, placeholder, icon: Icon, maxL
           <Icon size={15} strokeWidth={1.8} className={`transition-colors duration-300 ${focused ? "text-[var(--gold)]" : "text-[var(--gold-dark)]/40"}`} />
         </div>
         <label htmlFor={id} className={`absolute left-11 z-10 pointer-events-none font-jost transition-all duration-250 ${
-          floated ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#6B6257] tracking-wide"
+          floated ? "top-[7px] text-[9.5px] tracking-[0.18em] uppercase text-[var(--gold)] font-semibold" : "top-1/2 -translate-y-1/2 text-[13.5px] text-[#8C7A5E]/60 tracking-wide"
         }`}>{label}</label>
         <input id={id} type={type} value={value}
           onChange={e => onChange(e.target.value)}
@@ -173,39 +173,6 @@ export function FormLockModal({ isOpen, onSuccess, logoUrl, logoPlacement }: For
                     }}
                   />
                 )}
-
-                {/* Brand typography */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: "'Cinzel Decorative', serif",
-                      fontSize: "2.4rem",
-                      letterSpacing: "0.28em",
-                      color: "var(--gold-dark)",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1,
-                      marginBottom: "6px",
-                    }}
-                  >
-                    CYRA
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'Marcellus', serif",
-                      fontSize: "0.62rem",
-                      letterSpacing: "0.22em",
-                      textTransform: "uppercase",
-                      color: "var(--gold)",
-                      opacity: 0.8,
-                      whiteSpace: "nowrap",
-                      maxWidth: "100%",
-                      overflow: "hidden",
-                      textOverflow: "clip",
-                    }}
-                  >
-                    Salon &amp; Academy
-                  </div>
-                </div>
 
                 <p className="mt-5 text-sm font-jost text-[#6B7280]">Welcome! Please introduce yourself</p>
 
