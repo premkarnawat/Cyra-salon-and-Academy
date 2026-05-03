@@ -2,16 +2,46 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
+const SITE_URL = "https://www.cyrasalon.in"; // update if domain differs
+
 export const metadata: Metadata = {
-  title: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
+    template: "%s | Cyra Salon & Academy",
+  },
   description:
-    "Experience luxury hair & beauty treatments at Cyra Salon & Academy, Koregaon Park, Pune. Keratin, balayage, bridal packages & more.",
-  keywords: "salon pune, hair salon koregaon park, keratin treatment pune, bridal makeup pune, cyra salon",
+    "Experience luxury hair & beauty treatments at Cyra Salon & Academy, Koregaon Park, Pune. Specialising in Keratin, Balayage, Bridal packages, Hair Spa & professional beauty courses.",
+  keywords: [
+    "salon pune", "hair salon koregaon park", "keratin treatment pune",
+    "balayage pune", "bridal makeup pune", "hair spa pune",
+    "beauty academy pune", "cyra salon", "luxury salon pune",
+  ],
+  authors: [{ name: "Cyra Salon & Academy" }],
+  creator: "Cyra Salon & Academy",
+  publisher: "Cyra Salon & Academy",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Cyra Salon & Academy",
-    description: "Pune's Premier Luxury Salon & Academy",
-    type: "website",
+    title: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
+    description:
+      "Luxury hair & beauty treatments in Koregaon Park, Pune. Keratin, Balayage, Bridal & more.",
+    url: SITE_URL,
+    siteName: "Cyra Salon & Academy",
     locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
+    description:
+      "Luxury hair & beauty treatments in Koregaon Park, Pune. Keratin, Balayage, Bridal & more.",
   },
 };
 
@@ -37,6 +67,47 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Marcellus&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Jost:wght@200;300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+      {/* Local Business structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "HairSalon",
+              "name": "Cyra Salon & Academy",
+              "description": "Luxury hair & beauty salon and professional academy in Koregaon Park, Pune.",
+              "url": "https://www.cyrasalon.in",
+              "telephone": "+91-XXXXXXXXXX",
+              "priceRange": "₹₹₹",
+              "image": "https://www.cyrasalon.in/og-image.jpg",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Koregaon Park",
+                "addressLocality": "Pune",
+                "addressRegion": "Maharashtra",
+                "postalCode": "411001",
+                "addressCountry": "IN"
+              },
+              "geo": {
+                "@type": "GeoCoordinates",
+                "latitude": "18.5362",
+                "longitude": "73.8940"
+              },
+              "openingHoursSpecification": {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": [
+                  "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"
+                ],
+                "opens": "10:00",
+                "closes": "20:00"
+              },
+              "sameAs": []
+            }),
+          }}
+        />
+        {/* Geo meta */}
+        <meta name="geo.region" content="IN-MH" />
+        <meta name="geo.placename" content="Pune" />
         {/* Theme init — default LIGHT, only apply dark if explicitly stored */}
         <script
           dangerouslySetInnerHTML={{
