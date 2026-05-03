@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_CONFIG } from "@/lib/constants";
 import { HomeClient } from "@/app/_components/HomeClient";
-import type { Banner, RateCard, GalleryItem, SiteConfig } from "@/types";
+import type { Banner, Offer, Package, RateCard, GalleryItem, Review, SiteConfig } from "@/types";
 
 async function getConfig(): Promise<SiteConfig> {
   try {
@@ -15,6 +15,48 @@ async function getConfig(): Promise<SiteConfig> {
     return { ...DEFAULT_CONFIG, ...map } as SiteConfig;
   } catch {
     return DEFAULT_CONFIG as SiteConfig;
+  }
+}
+
+async function getOffers(): Promise<Offer[]> {
+  try {
+    const sb = await createClient();
+    const { data } = await sb
+      .from("offers")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getPackages(): Promise<Package[]> {
+  try {
+    const sb = await createClient();
+    const { data } = await sb
+      .from("packages")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getReviews(): Promise<Review[]> {
+  try {
+    const sb = await createClient();
+    const { data } = await sb
+      .from("reviews")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  } catch {
+    return [];
   }
 }
 
@@ -62,19 +104,25 @@ async function getGallery(): Promise<GalleryItem[]> {
 
 export default async function HomePage() {
   // All 4 fetches run in parallel — fast, server-side, SEO-visible
-  const [config, banners, rateCards, gallery] = await Promise.all([
+  const [config, banners, offers, packages, rateCards, gallery, reviews] = await Promise.all([
     getConfig(),
     getBanners(),
+    getOffers(),
+    getPackages(),
     getRateCards(),
     getGallery(),
+    getReviews(),
   ]);
 
   return (
     <HomeClient
       initialConfig={config}
       initialBanners={banners}
+      initialOffers={offers}
+      initialPackages={packages}
       initialRateCards={rateCards}
       initialGallery={gallery}
+      initialReviews={reviews}
     />
   );
 }
