@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
-const SITE_URL = "https://www.cyrasalon.in"; // update if domain differs
+const SITE_URL = "https://www.cyrasalon.com"; // update if domain differs
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     template: "%s | Cyra Salon & Academy",
   },
   description:
-    "Experience luxury hair & beauty treatments at Cyra Salon & Academy, Koregaon Park, Pune. Specialising in Keratin, Balayage, Bridal packages, Hair Spa & professional beauty courses.",
+    "Experience luxury hair & beauty treatments at Cyra Salon & Academy, Akurdi,Pcmc . Specialising in Keratin, Balayage, Bridal packages, Hair Spa & professional beauty courses.",
   keywords: [
-    "salon pune", "hair salon koregaon park", "keratin treatment pune",
-    "balayage pune", "bridal makeup pune", "hair spa pune",
-    "beauty academy pune", "cyra salon", "luxury salon pune",
+    "salon Pcmc", "hair salon Pcmc", "keratin treatment pune",
+    "balayage Pcmc", "bridal makeup pcmc", "hair spa Pcmc",
+    "beauty academy Pcmc", "cyra salon", "luxury salon Pcmc",
   ],
   authors: [{ name: "Cyra Salon & Academy" }],
   creator: "Cyra Salon & Academy",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
     description:
-      "Luxury hair & beauty treatments in Koregaon Park, Pune. Keratin, Balayage, Bridal & more.",
+      "Luxury hair & beauty treatments in Akurdi,Pcmc . Keratin, Balayage, Bridal & more.",
     url: SITE_URL,
     siteName: "Cyra Salon & Academy",
     locale: "en_IN",
@@ -39,9 +39,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cyra Salon & Academy — Pune's Premier Luxury Salon",
+    title: "Cyra Salon & Academy — Pcmc's Premier Luxury Salon",
     description:
-      "Luxury hair & beauty treatments in Koregaon Park, Pune. Keratin, Balayage, Bridal & more.",
+      "Luxury hair & beauty treatments in Akurdi,Pcmc. Keratin, Balayage, Bridal & more.",
   },
 };
 
@@ -75,33 +75,33 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "HairSalon",
               "name": "Cyra Salon & Academy",
-              "description": "Luxury hair & beauty salon and professional academy in Koregaon Park, Pune.",
-              "url": "https://www.cyrasalon.in",
-              "telephone": "+91-XXXXXXXXXX",
+              "description": "Luxury hair & beauty salon and professional academy in Akurdi,Pcmc.",
+              "url": "https://www.cyrasalon.com",
+              "telephone": "+91-8956455523",
               "priceRange": "₹₹₹",
               "image": "https://www.cyrasalon.in/og-image.jpg",
               "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "Koregaon Park",
-                "addressLocality": "Pune",
+                "streetAddress": "shop no.4,Building Sambhaji Chowk ,Pradhikaran,Nigdi,Pimpri-Chinchwad,Mahararashtra 411044",
+                "addressLocality": "Pradhikaran Nigdi",
                 "addressRegion": "Maharashtra",
-                "postalCode": "411001",
+                "postalCode": "411044",
                 "addressCountry": "IN"
               },
               "geo": {
                 "@type": "GeoCoordinates",
-                "latitude": "18.5362",
-                "longitude": "73.8940"
+                "latitude": "18.649049",
+                "longitude": "73.770348"
               },
               "openingHoursSpecification": {
                 "@type": "OpeningHoursSpecification",
                 "dayOfWeek": [
                   "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"
                 ],
-                "opens": "10:00",
-                "closes": "20:00"
+                "opens": "9:00",
+                "closes": "22:00"
               },
-              "sameAs": []
+              "sameAs": ["https://www.instagram.com/cyra_salon?igsh=MXVuZzAwajlmbXY5dw==","https://www.facebook.com/share/18B86DnaW6/"]
             }),
           }}
         />
